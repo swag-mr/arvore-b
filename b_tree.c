@@ -13,6 +13,17 @@ NO* criarNo(int T, int folha){
     return no;
 }
 
+void liberarNo(NO *no){
+    free(no->chaves); // Libera o espaço alocado para as chaves
+    if(!no->folha){
+        for(int i=0; i <= no->n; i++){
+            free(no->filhos[i]); // Se nao for folha, libera o espaço alocado para cada filho
+        }
+    }
+    free(no->filhos); // Libera o espaço alocado para o array de filhos
+    free(no); // Libera o no
+}
+
 NO* lerNo(const char *nome_arquivo, int T){
     FILE *arquivo = fopen(nome_arquivo, "rb");
     
@@ -25,11 +36,11 @@ NO* lerNo(const char *nome_arquivo, int T){
 
     fread(&no->n, sizeof(int), 1, arquivo);
     fread(&no->folha, sizeof(int), 1, arquivo);
-    fread(&no->chaves, sizeof(int), no->n, arquivo);
+    fread(no->chaves, sizeof(int), no->n, arquivo);
 
     if(!no->folha){
         for(int i=0; i <= no->n; i++){ // Aloca todos os filhos para ler o nome deles
-            no->filhos[i] = (char*) malloc(60 * sizeof(char)); // Tamanho do nome dos arquivos
+            no->filhos[i] = (char*) malloc(100 * sizeof(char)); // Tamanho do nome dos arquivos
             fread(no->filhos[i], sizeof(char), 100, arquivo);
         }
     }
@@ -88,5 +99,8 @@ NO* busca(NO *no, int chave, int T){
         return NULL;
     }
 
-    return busca(filho, chave, T);
+    NO *resultado = busca(filho, chave, T);
+    liberarNo(filho);
+    
+    return resultado;
 }
