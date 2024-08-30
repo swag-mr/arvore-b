@@ -91,33 +91,41 @@ void gravarNo(const char *nome_arquivo, NO *no, int T){
     fclose(arquivo);
 }
 
-NO* busca(NO *no, int chave, int T){
-    // Busco a posição da chave no nó
-    int i = 0;
-    while(i < no->n && chave > no->chaves[i]){
-        i++;
+NO* busca(NO *no, int chave, int T, int *posicao){ 
+    // Implementada busca binária para melhorar eficiência de busca
+    int inicio = 0;
+    int fim = no->n - 1;
+
+    while(inicio <= fim){
+        int meio = (inicio + fim) / 2;
+
+        if(no->chaves[meio] == chave){
+            // Encontrou a chave
+            *posicao = meio;
+            return no;
+        }
+
+        if(no->chaves[meio] > chave){
+            fim = meio - 1;
+        }else{
+            inicio = meio + 1;
+        }
     }
 
-    if(i < no->n && chave == no->chaves[i]){
-        // A chave foi encontrada no nó atual
-        return no;
-    }
-
+    // Se o nó for folha, a chave não está na árvore
     if(no->folha){
-        // Não encontramos a chave no nó atual, e não existem nós abaixos
-        // logo, a chave não está presente
-        return NULL;
-    }
-    
-    // Le o filho e continua a busca
-    NO *filho = lerNo(no->filhos[i], T);
-    if(filho == NULL){
-        // Se a leitura falhou, retorna NULL;
         return NULL;
     }
 
-    NO *resultado = busca(filho, chave, T);
+    // Continua a busca no filho certo
+    NO *filho = lerNo(no->filhos[inicio], T);
+    if(filho == NULL){
+        return NULL;
+    }
+
+    // Faço a var resultado para poder liberar o nó
+    NO *resultado = busca(filho, chave, T, posicao);
     liberarNo(filho);
-    
+
     return resultado;
 }
