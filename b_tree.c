@@ -14,14 +14,20 @@ NO* criarNo(int T, int folha){
 }
 
 void liberarNo(NO *no){
-    free(no->chaves); // Libera o espaço alocado para as chaves
+    // Libera o espaço alocado para as chaves
+    free(no->chaves);
+
     if(!no->folha){
         for(int i=0; i <= no->n; i++){
-            free(no->filhos[i]); // Se nao for folha, libera o espaço alocado para cada filho
+            // Se nao for folha, libera o espaço alocado para cada filho
+            free(no->filhos[i]);
         }
     }
-    free(no->filhos); // Libera o espaço alocado para o array de filhos
-    free(no); // Libera o no
+
+    // Libera o espaço alocado para o array de filhos
+    free(no->filhos);
+    // Libera o no
+    free(no);
 }
 
 NO* lerNo(const char *nome_arquivo, int T){
@@ -32,15 +38,24 @@ NO* lerNo(const char *nome_arquivo, int T){
         return NULL;
     }
 
-    NO *no = criarNo(T, 0);
+    // Verifica se o nó do arquivo é folha
+    int folha;
+    fread(&folha, sizeof(int), 1, arquivo);
 
+    // Inicializa o nó com a informação da folha obtida
+    NO *no = criarNo(T, folha);
+
+    // Le a quantidade de chaves no nó
     fread(&no->n, sizeof(int), 1, arquivo);
-    fread(&no->folha, sizeof(int), 1, arquivo);
+
+    // Le o array de chaves no arquivo
     fread(no->chaves, sizeof(int), no->n, arquivo);
 
     if(!no->folha){
-        for(int i=0; i <= no->n; i++){ // Aloca todos os filhos para ler o nome deles
-            no->filhos[i] = (char*) malloc(100 * sizeof(char)); // Tamanho do nome dos arquivos
+        for(int i=0; i <= no->n; i++){
+            // Aloca todos os filhos para ler o nome deles
+            no->filhos[i] = (char*) malloc(100 * sizeof(char));
+            // Le o nome de cada nó filho
             fread(no->filhos[i], sizeof(char), 100, arquivo);
         }
     }
@@ -57,17 +72,19 @@ void gravarNo(const char *nome_arquivo, NO *no, int T){
         return;
     }
 
-    // Grava o numero de chaves e se e folha ou não
-    fwrite(&no->n, sizeof(int), 1, arquivo);
+    // Grava se é folha ou não
     fwrite(&no->folha, sizeof(int), 1, arquivo);
+
+    // Grava o número de chaves do nó
+    fwrite(&no->n, sizeof(int), 1, arquivo);
 
     // Grava as chaves
     fwrite(no->chaves, sizeof(int), no->n, arquivo);
 
     // Se não for uma folha, grava os nomes dos arquivos dos filhos
-    if (!no->folha) {
+    if(!no->folha){
         for (int i = 0; i <= no->n; i++) {
-            fwrite(no->filhos[i], sizeof(char), 60, arquivo); // Assume que o tamanho máximo do nome do arquivo é 60
+            fwrite(no->filhos[i], sizeof(char), 100, arquivo); // Assume que o tamanho máximo do nome do arquivo é 100
         }
     }
 
