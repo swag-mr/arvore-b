@@ -1,6 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "b_tree.h"
+
+char* gerarNomeArquivo(){
+    static char nome[21];
+    const char *caracteres = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    for(int i = 0; i < 20; i++){
+        nome[i] = caracteres[rand() % 62]; // Pois sao 61 caracteres
+    }
+    nome[20] = '\0'; // Adiciona o \0 (fim da string)
+    return nome;
+}
 
 NO* criarNo(int T, int folha){
     NO *no = (NO*) malloc(sizeof(NO));
@@ -54,9 +65,9 @@ NO* lerNo(const char *nome_arquivo, int T){
     if(!no->folha){
         for(int i=0; i <= no->n; i++){
             // Aloca todos os filhos para ler o nome deles
-            no->filhos[i] = (char*) malloc(100 * sizeof(char));
+            no->filhos[i] = (char*) malloc(21 * sizeof(char));
             // Le o nome de cada nó filho
-            fread(no->filhos[i], sizeof(char), 100, arquivo);
+            fread(no->filhos[i], sizeof(char), 21, arquivo);
         }
     }
 
@@ -84,7 +95,7 @@ void gravarNo(const char *nome_arquivo, NO *no, int T){
     // Se não for uma folha, grava os nomes dos arquivos dos filhos
     if(!no->folha){
         for (int i = 0; i <= no->n; i++) {
-            fwrite(no->filhos[i], sizeof(char), 100, arquivo); // Assume que o tamanho máximo do nome do arquivo é 100
+            fwrite(no->filhos[i], sizeof(char), 21, arquivo); // Assume que o tamanho máximo do nome do arquivo é 21
         }
     }
 
@@ -128,4 +139,95 @@ NO* busca(NO *no, int chave, int T, int *posicao){
     liberarNo(filho);
 
     return resultado;
+}
+
+void inserirNaoCheio(NO *no, int chave, int T, char *nomeArquivoNo){
+    int i = no->n - 1;
+
+    if(no->folha){
+        // Insere a chave na posicao correta
+        while(i >= 0 && chave < no->chaves[i]){
+            no->chaves[i+1] = no->chaves[i];
+            i--;
+        }
+        no->chaves[i+1] = chave;
+        no->n++;
+
+        // Grava o nó alterado de volta no arquivo
+        gravarNo(nomeArquivoNo, no, T);
+    }else{
+        // Acha o filho para inserir a chave
+        while(i >= 0 && chave < no->chaves[i]){
+            i--;
+        }
+        i++;
+
+        // Carrega o filho do arquivo
+        NO *filho = lerNo(no->filhos[i], T);
+
+        if(filho->n == 2 * T - 1){
+            splitChild(no, i, T);
+            
+            // Atualiza o i se necessário
+            if(chave > no->chaves[i]){
+                i++;
+            }
+        }
+        inserirNaoCheio(filho, chave, T, no->filhos[i]);
+
+        // Grava o filho atualizado de volta no arquivo
+        gravarNo(no->filhos[i], filho, T);
+
+        // Libera a memória do filho
+        liberarNo(filho);
+    }
+    // Grava o nó atual de volta no arquivo
+    gravarNo(nomeArquivoNo, no, T);
+}
+
+void inserir(NO **raiz, int chave, int T){
+    NO *no = *raiz;
+
+    if(no == NULL){
+        // Cria uma raiz
+        *raiz = criarNo(T, 1);
+        (*raiz)->chaves[0] = chave;
+        (*raiz)->n = 1;
+
+        // Grava a nova raiz em um arquivo
+        char *nomeArquivoRaiz = gerarNomeArquivo();
+        gravarNo(nomeArquivoRaiz, *raiz, T);
+
+        free(nomeArquivoRaiz);
+    }else{
+        if(no->n == 2 * T - 1){
+            // Split se a raiz estiver cheia
+            NO *novaRaiz = criarNo(T, 0);
+
+            // Grava o nome do arquivo da antiga raiz
+            char *nomeArquivoAntigaRaiz = gerarNomeArquivo();
+            novaRaiz->filhos[0] = nomeArquivoAntigaRaiz;
+
+            // Grava a antiga raiz no novo arquivo
+            gravarNo(nomeArquivoAntigaRaiz, no, T);
+
+            splitChild(novaRaiz, 0, T);
+
+            // Atualiza a raiz
+            *raiz = novaRaiz;
+
+            // Grava a nova raiz em um arquivo
+            char *nomeArquivoNovaRaiz = gerarNomeArquivo();
+            gravarNo(nomeArquivoNovaRaiz, *raiz, T);
+
+            // Insere na nova raiz que foi splitada
+            inserirNaoCheio(*raiz, chave, T, nomeArquivoNovaRaiz);
+
+            // Libera os nomes alocados
+            free(nomeArquivoNovaRaiz);
+            free(nomeArquivoAntigaRaiz);
+        }else{
+            inserirNaoCheio(*raiz, chave, T, "raiz"); // Modificar esse raiz para o nome da raiz
+        }
+    }
 }
