@@ -1,15 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include "b_tree.h"
 
 char* gerarNomeArquivo(){
-    static char nome[21];
+    static char nome[30];
     const char *caracteres = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    for(int i = 0; i < 20; i++){
+    strcpy(nome, "arquivos/");
+    for(int i = 9; i < 29; i++){
         nome[i] = caracteres[rand() % 62]; // Pois sao 61 caracteres
     }
-    nome[20] = '\0'; // Adiciona o \0 (fim da string)
+    nome[29] = '\0'; // Adiciona o \0 (fim da string)
     return nome;
 }
 
@@ -65,9 +67,9 @@ NO* lerNo(const char *nome_arquivo, int T){
     if(!no->folha){
         for(int i=0; i <= no->n; i++){
             // Aloca todos os filhos para ler o nome deles
-            no->filhos[i] = (char*) malloc(21 * sizeof(char));
+            no->filhos[i] = (char*) malloc(30 * sizeof(char));
             // Le o nome de cada nó filho
-            fread(no->filhos[i], sizeof(char), 21, arquivo);
+            fread(no->filhos[i], sizeof(char), 30, arquivo);
         }
     }
 
@@ -95,7 +97,7 @@ void gravarNo(const char *nome_arquivo, NO *no, int T){
     // Se não for uma folha, grava os nomes dos arquivos dos filhos
     if(!no->folha){
         for (int i = 0; i <= no->n; i++) {
-            fwrite(no->filhos[i], sizeof(char), 21, arquivo); // Assume que o tamanho máximo do nome do arquivo é 21
+            fwrite(no->filhos[i], sizeof(char), 30, arquivo); // Assume que o tamanho máximo do nome do arquivo é 30
         }
     }
 
