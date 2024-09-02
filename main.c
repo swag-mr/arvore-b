@@ -6,5 +6,16 @@
 int main(){
     srand(time(NULL));
 
+    NO *raiz = NULL;
+    char *nomeArquivoRaiz = (char*) malloc(21 * sizeof(char));
+
+    inserir(&raiz, 10, 3, &nomeArquivoRaiz);
+
+    printf("\n%s\n", nomeArquivoRaiz);
+
+    printf("imprimir arvore:\n\n");
+    imprimir(raiz);
+    printf("\n");
+
     return 0;
 }

@@ -141,6 +141,47 @@ NO* busca(NO *no, int chave, int T, int *posicao){
     return resultado;
 }
 
+void splitChild(NO *pai, int indice, int T, char *nomeArquivoPai){
+    NO *filho = lerNo(pai->filhos[indice], T);
+    NO *novoNo = criarNo(T, filho->folha);
+
+    novoNo->n = T - 1;
+
+    // Move as chaves e filhos para o novo nó
+    for(int i=0; i < T - 1; i++){
+        novoNo->chaves[i] = filho->chaves[i+T];
+    }
+
+    if(!filho->folha){
+        for(int i=0; i < T; i++){
+            novoNo->filhos[i] = filho->filhos[i+T];
+        }
+    }
+
+    filho->n = T - 1;
+
+    // Andar os filhos do pai para inserir o novoNo
+    for(int i=pai->n; i > indice; i--){
+        pai->filhos[i+1] = pai->filhos[i];
+    }
+    
+    char *nomeArquivoNovoNo = gerarNomeArquivo();
+
+    pai->filhos[indice+1] = nomeArquivoNovoNo;
+
+    // Andar as chaves do pai para inserir a mediana das chaves do filho
+    for(int i=pai->n-1; i >= indice; i--){
+        pai->chaves[i+1] = pai->chaves[i];
+    }
+
+    pai->chaves[indice] = filho->chaves[T-1];
+    pai->n++;
+
+    gravarNo(nomeArquivoPai, pai, T);
+    gravarNo(nomeArquivoNovoNo, novoNo, T);
+    gravarNo(pai->filhos[indice], filho, T);
+}
+
 void inserirNaoCheio(NO *no, int chave, int T, char *nomeArquivoNo){
     int i = no->n - 1;
 
@@ -166,9 +207,9 @@ void inserirNaoCheio(NO *no, int chave, int T, char *nomeArquivoNo){
         NO *filho = lerNo(no->filhos[i], T);
 
         if(filho->n == 2 * T - 1){
-            splitChild(no, i, T);
+            splitChild(no, i, T, nomeArquivoNo); // Verificar se o nome do pai é esse mesmo (ainda nao conferi)
             
-            // Atualiza o i se necessário
+            // Determina qual dos filhos é o novo
             if(chave > no->chaves[i]){
                 i++;
             }
@@ -185,7 +226,7 @@ void inserirNaoCheio(NO *no, int chave, int T, char *nomeArquivoNo){
     gravarNo(nomeArquivoNo, no, T);
 }
 
-void inserir(NO **raiz, int chave, int T){
+void inserir(NO **raiz, int chave, int T, char **nomeArquivoRaizAtual){
     NO *no = *raiz;
 
     if(no == NULL){
@@ -198,36 +239,34 @@ void inserir(NO **raiz, int chave, int T){
         char *nomeArquivoRaiz = gerarNomeArquivo();
         gravarNo(nomeArquivoRaiz, *raiz, T);
 
-        free(nomeArquivoRaiz);
+        *nomeArquivoRaizAtual = nomeArquivoRaiz;
     }else{
         if(no->n == 2 * T - 1){
             // Split se a raiz estiver cheia
             NO *novaRaiz = criarNo(T, 0);
 
-            // Grava o nome do arquivo da antiga raiz
-            char *nomeArquivoAntigaRaiz = gerarNomeArquivo();
-            novaRaiz->filhos[0] = nomeArquivoAntigaRaiz;
-
-            // Grava a antiga raiz no novo arquivo
-            gravarNo(nomeArquivoAntigaRaiz, no, T);
-
-            splitChild(novaRaiz, 0, T);
+            novaRaiz->filhos[0] = *nomeArquivoRaizAtual;
 
             // Atualiza a raiz
             *raiz = novaRaiz;
 
             // Grava a nova raiz em um arquivo
             char *nomeArquivoNovaRaiz = gerarNomeArquivo();
-            gravarNo(nomeArquivoNovaRaiz, *raiz, T);
+            gravarNo(nomeArquivoNovaRaiz, *raiz, T); // Não sei se precisa gravar, pois no split child ele grava
+
+            splitChild(novaRaiz, 0, T, nomeArquivoNovaRaiz);
 
             // Insere na nova raiz que foi splitada
             inserirNaoCheio(*raiz, chave, T, nomeArquivoNovaRaiz);
 
-            // Libera os nomes alocados
-            free(nomeArquivoNovaRaiz);
-            free(nomeArquivoAntigaRaiz);
+            *nomeArquivoRaizAtual = nomeArquivoNovaRaiz;
         }else{
-            inserirNaoCheio(*raiz, chave, T, "raiz"); // Modificar esse raiz para o nome da raiz
+            inserirNaoCheio(*raiz, chave, T, *nomeArquivoRaizAtual);
+            // Nao precisa retornar o nome do arquivo atual da raiz, pois nao alterou ele
         }
     }
+}
+
+void imprimir(NO *raiz){
+    printf("%d\n", raiz->chaves[0]);
 }
