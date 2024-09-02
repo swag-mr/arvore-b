@@ -5,7 +5,7 @@
 #include "b_tree.h"
 
 char* gerarNomeArquivo(){
-    static char nome[30];
+    char *nome = (char*) malloc(30 * sizeof(char));
     const char *caracteres = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     strcpy(nome, "arquivos/");
     for(int i = 9; i < 29; i++){
@@ -156,7 +156,7 @@ void splitChild(NO *pai, int indice, int T, char *nomeArquivoPai){
 
     if(!filho->folha){
         for(int i=0; i < T; i++){
-            novoNo->filhos[i] = filho->filhos[i+T];
+            novoNo->filhos[i] = strdup(filho->filhos[i+T]);
         }
     }
 
@@ -182,6 +182,8 @@ void splitChild(NO *pai, int indice, int T, char *nomeArquivoPai){
     gravarNo(nomeArquivoPai, pai, T);
     gravarNo(nomeArquivoNovoNo, novoNo, T);
     gravarNo(pai->filhos[indice], filho, T);
+
+    // Dar o free no novoNo e no filho
 }
 
 void inserirNaoCheio(NO *no, int chave, int T, char *nomeArquivoNo){
@@ -243,7 +245,10 @@ void inserir(NO **raiz, int chave, int T, char **nomeArquivoRaizAtual){
 
         *nomeArquivoRaizAtual = nomeArquivoRaiz;
     }else{
-        if(no->n == 2 * T - 1){
+        if(no->n == 2 * T - 2){
+            // Tive que colocar 2 * T - 2, pois antes ele enchia o array, e não splitava
+            inserirNaoCheio(*raiz, chave, T, *nomeArquivoRaizAtual);
+
             // Split se a raiz estiver cheia
             NO *novaRaiz = criarNo(T, 0);
 
@@ -254,12 +259,11 @@ void inserir(NO **raiz, int chave, int T, char **nomeArquivoRaizAtual){
 
             // Grava a nova raiz em um arquivo
             char *nomeArquivoNovaRaiz = gerarNomeArquivo();
-            gravarNo(nomeArquivoNovaRaiz, *raiz, T); // Não sei se precisa gravar, pois no split child ele grava
 
             splitChild(novaRaiz, 0, T, nomeArquivoNovaRaiz);
 
-            // Insere na nova raiz que foi splitada
-            inserirNaoCheio(*raiz, chave, T, nomeArquivoNovaRaiz);
+            /* // Insere na nova raiz que foi splitada */
+            /* inserirNaoCheio(*raiz, chave, T, nomeArquivoNovaRaiz); */
 
             *nomeArquivoRaizAtual = nomeArquivoNovaRaiz;
         }else{
@@ -269,6 +273,23 @@ void inserir(NO **raiz, int chave, int T, char **nomeArquivoRaizAtual){
     }
 }
 
-void imprimir(NO *raiz){
-    printf("%d\n", raiz->chaves[0]);
+void imprimir(NO *raiz, int T){
+    for(int i=0; i < raiz->n; i++){
+        printf("%d ", raiz->chaves[i]);
+    }
+    printf("\n");
+
+    NO *dir = lerNo(raiz->filhos[1], T);
+    printf("DIREITA:\n");
+    for(int i=0; i < dir->n; i++){
+        printf("%d ", dir->chaves[i]);
+    }
+    printf("\n");
+
+    NO *esq = lerNo(raiz->filhos[0], T);
+    printf("ESQUERDA:\n");
+    for(int i=0; i < esq->n; i++){
+        printf("%d ", esq->chaves[i]);
+    }
+    printf("\n");
 }
