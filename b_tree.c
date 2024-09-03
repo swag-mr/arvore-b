@@ -220,14 +220,9 @@ void inserirNaoCheio(NO *no, int chave, int T, char *nomeArquivoNo){
         }
         inserirNaoCheio(filho, chave, T, no->filhos[i]);
 
-        // Grava o filho atualizado de volta no arquivo
-        gravarNo(no->filhos[i], filho, T);
-
         // Libera a memória do filho
         liberarNo(filho);
     }
-    // Grava o nó atual de volta no arquivo
-    gravarNo(nomeArquivoNo, no, T);
 }
 
 void inserir(NO **raiz, int chave, int T, char **nomeArquivoRaizAtual){
@@ -279,13 +274,20 @@ void imprimir(NO *raiz, int T){
     }
     printf("\n");
 
+    NO *dir1 = lerNo(raiz->filhos[2], T);
+    printf("DIREITA DA DIREITA:\n");
+    for(int i=0; i < dir1->n; i++){
+        printf("%d ", dir1->chaves[i]);
+    }
+    printf("\n");
+
     NO *dir = lerNo(raiz->filhos[1], T);
     printf("DIREITA:\n");
     for(int i=0; i < dir->n; i++){
         printf("%d ", dir->chaves[i]);
     }
     printf("\n");
-
+    
     NO *esq = lerNo(raiz->filhos[0], T);
     printf("ESQUERDA:\n");
     for(int i=0; i < esq->n; i++){

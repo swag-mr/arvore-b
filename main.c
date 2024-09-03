@@ -14,6 +14,10 @@ int main(){
     inserir(&raiz, -3, 3, &nomeArquivoRaiz);
     inserir(&raiz, 7, 3, &nomeArquivoRaiz);
     inserir(&raiz, -5, 3, &nomeArquivoRaiz);
+    inserir(&raiz, -6, 3, &nomeArquivoRaiz);
+    inserir(&raiz, -7, 3, &nomeArquivoRaiz);
+    inserir(&raiz, -8, 3, &nomeArquivoRaiz);
+    inserir(&raiz, -9, 3, &nomeArquivoRaiz);
 
     printf("\n%s\n", nomeArquivoRaiz);
 
