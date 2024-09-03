@@ -17,6 +17,6 @@ NO* busca(NO *no, int chave, int T, int *posicao);
 void splitChild(NO *pai, int indice, int T, char *nomeArquivoPai);
 void inserirNaoCheio(NO *no, int chave, int T, char *nomeArquivoNo);
 void inserir(NO **raiz, int chave, int T, char **nomeArquivoRaizAtual);
-void imprimir(NO *raiz, int T);
+void imprimirArvoreB(NO* no, int nivel, int T);
 
 #endif

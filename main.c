@@ -18,11 +18,11 @@ int main(){
     inserir(&raiz, -7, 3, &nomeArquivoRaiz);
     inserir(&raiz, -8, 3, &nomeArquivoRaiz);
     inserir(&raiz, -9, 3, &nomeArquivoRaiz);
-
-    printf("\n%s\n", nomeArquivoRaiz);
+    inserir(&raiz, -10, 3, &nomeArquivoRaiz);
+    inserir(&raiz, -11, 3, &nomeArquivoRaiz);
 
     printf("imprimir arvore:\n\n");
-    imprimir(raiz, 3);
+    imprimirArvoreB(raiz, 0, 3);
     printf("\n");
 
     return 0;
