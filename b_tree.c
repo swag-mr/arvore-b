@@ -210,24 +210,15 @@ void inserirNaoCheio(NO *no, int chave, int T, char *nomeArquivoNo){
         // Carrega o filho do arquivo
         NO *filho = lerNo(no->filhos[i], T);
 
-        if(filho->n == 2 * T - 1){
-            splitChild(no, i, T, nomeArquivoNo); // Verificar se o nome do pai é esse mesmo (ainda nao conferi)
-            
-            // Determina qual dos filhos é o novo
-            if(chave > no->chaves[i]){
-                i++;
-            }
-        }
         inserirNaoCheio(filho, chave, T, no->filhos[i]);
 
-        // Grava o filho atualizado de volta no arquivo
-        gravarNo(no->filhos[i], filho, T);
+        if(filho->n == 2 * T - 1){
+            splitChild(no, i, T, nomeArquivoNo); // Verificar se o nome do pai é esse mesmo (ainda nao conferi)
+        }
 
         // Libera a memória do filho
         liberarNo(filho);
     }
-    // Grava o nó atual de volta no arquivo
-    gravarNo(nomeArquivoNo, no, T);
 }
 
 void inserir(NO **raiz, int chave, int T, char **nomeArquivoRaizAtual){
@@ -273,23 +264,23 @@ void inserir(NO **raiz, int chave, int T, char **nomeArquivoRaizAtual){
     }
 }
 
-void imprimir(NO *raiz, int T){
-    for(int i=0; i < raiz->n; i++){
-        printf("%d ", raiz->chaves[i]);
+// Função de impressão da Árvore B
+void imprimirArvoreB(NO* no, int nivel, int T) {
+    if (no != NULL) {
+        int i;
+        for (i = 0; i < no->n; i++) {
+            if (!no->folha) {
+                NO *filho = lerNo(no->filhos[i], T);
+                imprimirArvoreB(filho, nivel + 1, T);
+            }
+            for (int j = 0; j < nivel; j++) {
+                printf("    ");  // Indentação para mostrar a profundidade
+            }
+            printf("%d\n", no->chaves[i]);
+        }
+        if (!no->folha) {
+            NO *filho = lerNo(no->filhos[i], T);
+            imprimirArvoreB(filho, nivel + 1, T);
+        }
     }
-    printf("\n");
-
-    NO *dir = lerNo(raiz->filhos[1], T);
-    printf("DIREITA:\n");
-    for(int i=0; i < dir->n; i++){
-        printf("%d ", dir->chaves[i]);
-    }
-    printf("\n");
-
-    NO *esq = lerNo(raiz->filhos[0], T);
-    printf("ESQUERDA:\n");
-    for(int i=0; i < esq->n; i++){
-        printf("%d ", esq->chaves[i]);
-    }
-    printf("\n");
 }
