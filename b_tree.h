@@ -18,5 +18,6 @@ void splitChild(NO *pai, int indice, int T, char *nomeArquivoPai);
 void inserirNaoCheio(NO *no, int chave, int T, char *nomeArquivoNo);
 void inserir(NO **raiz, int chave, int T, char **nomeArquivoRaizAtual);
 void imprimirArvoreB(NO* no, int nivel, int T);
+void exibirMenu();
 
 #endif
