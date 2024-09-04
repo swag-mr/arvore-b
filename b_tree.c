@@ -105,42 +105,21 @@ void gravarNo(const char *nome_arquivo, NO *no, int T){
 }
 
 NO* busca(NO *no, int chave, int T, int *posicao){ 
-    // Implementada busca binária para melhorar eficiência de busca
-    int inicio = 0;
-    int fim = no->n - 1;
-
-    while(inicio <= fim){
-        int meio = (inicio + fim) / 2;
-
-        if(no->chaves[meio] == chave){
-            // Encontrou a chave
-            *posicao = meio;
-            return no;
-        }
-
-        if(no->chaves[meio] > chave){
-            fim = meio - 1;
-        }else{
-            inicio = meio + 1;
-        }
+    int i = 0;
+    while(i < no->n && chave > no->chaves[i]){
+        i++;
     }
 
-    // Se o nó for folha, a chave não está na árvore
+    if(i < no->n && chave == no->chaves[i]){
+        *posicao = i;
+        return no;
+    }
+
     if(no->folha){
         return NULL;
+    }else{
+        return busca(lerNo(no->filhos[i], T), chave, T, posicao);
     }
-
-    // Continua a busca no filho certo
-    NO *filho = lerNo(no->filhos[inicio], T);
-    if(filho == NULL){
-        return NULL;
-    }
-
-    // Faço a var resultado para poder liberar o nó
-    NO *resultado = busca(filho, chave, T, posicao);
-    liberarNo(filho);
-
-    return resultado;
 }
 
 void splitChild(NO *pai, int indice, int T, char *nomeArquivoPai){
@@ -183,7 +162,7 @@ void splitChild(NO *pai, int indice, int T, char *nomeArquivoPai){
     gravarNo(nomeArquivoNovoNo, novoNo, T);
     gravarNo(pai->filhos[indice], filho, T);
 
-    // Dar o free no novoNo e no filho
+    // Verificar se liberar o nome
 }
 
 void inserirNaoCheio(NO *no, int chave, int T, char *nomeArquivoNo){
@@ -213,7 +192,7 @@ void inserirNaoCheio(NO *no, int chave, int T, char *nomeArquivoNo){
         inserirNaoCheio(filho, chave, T, no->filhos[i]);
 
         if(filho->n == 2 * T - 1){
-            splitChild(no, i, T, nomeArquivoNo); // Verificar se o nome do pai é esse mesmo (ainda nao conferi)
+            splitChild(no, i, T, nomeArquivoNo);
         }
 
         // Libera a memória do filho
@@ -283,4 +262,16 @@ void imprimirArvoreB(NO* no, int nivel, int T) {
             imprimirArvoreB(filho, nivel + 1, T);
         }
     }
+}
+
+void exibirMenu(){
+    printf("\n=====================================\n");
+    printf("|        MENU - ÁRVORE B            |\n");
+    printf("=====================================\n");
+    printf("| 1. Inserir na árvore              |\n");
+    printf("| 2. Buscar na árvore               |\n");
+    printf("| 3. Imprimir a árvore              |\n");
+    printf("| 4. Sair                           |\n");
+    printf("=====================================\n");
+    printf("Digite sua escolha: ");
 }
