@@ -122,21 +122,27 @@ NO* buscaInsercao(NO *no, int chave, int T){
 }
 
 NO* busca(NO *no, int chave, int T, int *posicao, char **nomeBuscado, char *nomeNoAtual){ 
-    int i = 0;
-    while(i < no->n && chave > no->chaves[i]){
-        i++;
-    }
+    int inicio = 0;
+    int fim = no->n - 1;
 
-    if(i < no->n && chave == no->chaves[i]){
-        strcpy(*nomeBuscado, nomeNoAtual);
-        *posicao = i;
-        return no;
+    while(inicio <= fim){
+        int meio = (inicio + fim) / 2;
+
+        if(chave == no->chaves[meio]){
+            strcpy(*nomeBuscado, nomeNoAtual);
+            *posicao = meio;
+            return no;
+        }else if(chave > no->chaves[meio]){
+            inicio = meio + 1;
+        }else{
+            fim = meio - 1;
+        }
     }
 
     if(no->folha){
         return NULL;
     }else{
-        return busca(lerNo(no->filhos[i], T), chave, T, posicao, nomeBuscado, no->filhos[i]);
+        return busca(lerNo(no->filhos[inicio], T), chave, T, posicao, nomeBuscado, no->filhos[inicio]);
     }
 }
 
