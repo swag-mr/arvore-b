@@ -104,6 +104,23 @@ void gravarNo(const char *nome_arquivo, NO *no, int T){
     fclose(arquivo);
 }
 
+NO* buscaInsercao(NO *no, int chave, int T){ 
+    int i = 0;
+    while(i < no->n && chave > no->chaves[i]){
+        i++;
+    }
+
+    if(i < no->n && chave == no->chaves[i]){
+        return no;
+    }
+
+    if(no->folha){
+        return NULL;
+    }else{
+        return buscaInsercao(lerNo(no->filhos[i], T), chave, T);
+    }
+}
+
 NO* busca(NO *no, int chave, int T, int *posicao, char **nomeBuscado, char *nomeNoAtual){ 
     int i = 0;
     while(i < no->n && chave > no->chaves[i]){
@@ -201,7 +218,7 @@ void inserirNaoCheio(NO *no, int chave, int T, char *nomeArquivoNo){
     }
 }
 
-void inserir(NO **raiz, int chave, int T, char **nomeArquivoRaizAtual){
+int inserir(NO **raiz, int chave, int T, char **nomeArquivoRaizAtual){
     NO *no = *raiz;
 
     if(no == NULL){
@@ -216,6 +233,12 @@ void inserir(NO **raiz, int chave, int T, char **nomeArquivoRaizAtual){
 
         *nomeArquivoRaizAtual = nomeArquivoRaiz;
     }else{
+        NO *buscado = buscaInsercao(no, chave, T);
+        if(buscado != NULL){
+            // Não inseriu
+            return 0;
+        }
+
         if(no->n == 2 * T - 2){
             // Tive que colocar 2 * T - 2, pois antes ele enchia o array, e não splitava
             inserirNaoCheio(*raiz, chave, T, *nomeArquivoRaizAtual);
@@ -233,15 +256,13 @@ void inserir(NO **raiz, int chave, int T, char **nomeArquivoRaizAtual){
 
             splitChild(novaRaiz, 0, T, nomeArquivoNovaRaiz);
 
-            /* // Insere na nova raiz que foi splitada */
-            /* inserirNaoCheio(*raiz, chave, T, nomeArquivoNovaRaiz); */
-
             *nomeArquivoRaizAtual = nomeArquivoNovaRaiz;
         }else{
             inserirNaoCheio(*raiz, chave, T, *nomeArquivoRaizAtual);
             // Nao precisa retornar o nome do arquivo atual da raiz, pois nao alterou ele
         }
     }
+    return 1;
 }
 
 // Função de impressão da Árvore B

@@ -11,7 +11,7 @@ int main(){
     NO *raiz = NULL;
     char *nomeArquivoRaiz = (char*) malloc(21 * sizeof(char));
 
-    int opcao, chave, T, pos;
+    int opcao, chave, T, pos, inseriu;
     NO *buscado;
     char *nomeBuscado = (char*) malloc(30 * sizeof(char));
 
@@ -26,8 +26,12 @@ int main(){
             case 1:
                 printf("Digite a chave a ser inserida: ");
                 scanf("%d", &chave);
-                inserir(&raiz, chave, T, &nomeArquivoRaiz);
-                printf("\nChave %d inserida com sucesso.\n", chave);
+                inseriu = inserir(&raiz, chave, T, &nomeArquivoRaiz);
+                if(inseriu){
+                    printf("\nChave %d inserida com sucesso.\n", chave);
+                }else{
+                    printf("\nChave %d já existe na árvore.\n", chave);
+                }
                 break;
 
             case 2:
