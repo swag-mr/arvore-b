@@ -13,6 +13,7 @@ int main(){
 
     int opcao, chave, T, pos;
     NO *buscado;
+    char *nomeBuscado = (char*) malloc(30 * sizeof(char));
 
     printf("Digite o T da arvore: ");
     scanf("%d", &T);
@@ -32,9 +33,9 @@ int main(){
             case 2:
                 printf("Digite a chave a ser buscada: ");
                 scanf("%d", &chave);
-                buscado = busca(raiz, chave, T, &pos);
+                buscado = busca(raiz, chave, T, &pos, &nomeBuscado, nomeArquivoRaiz);
                 if(buscado != NULL) {
-                    printf("\nChave %d encontrada na posição %d.\n", buscado->chaves[pos], pos);
+                    printf("\nChave %d encontrada na posição %d do nó %s.\n", buscado->chaves[pos], pos+1, nomeBuscado);
                 } else {
                     printf("\nChave %d não encontrada.\n", chave);
                 }
@@ -49,6 +50,7 @@ int main(){
             case 4:
                 printf("\nSaindo...\n");
                 free(nomeArquivoRaiz);
+                free(nomeBuscado);
                 return 0;
 
             default:

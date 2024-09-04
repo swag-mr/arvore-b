@@ -104,13 +104,14 @@ void gravarNo(const char *nome_arquivo, NO *no, int T){
     fclose(arquivo);
 }
 
-NO* busca(NO *no, int chave, int T, int *posicao){ 
+NO* busca(NO *no, int chave, int T, int *posicao, char **nomeBuscado, char *nomeNoAtual){ 
     int i = 0;
     while(i < no->n && chave > no->chaves[i]){
         i++;
     }
 
     if(i < no->n && chave == no->chaves[i]){
+        strcpy(*nomeBuscado, nomeNoAtual);
         *posicao = i;
         return no;
     }
@@ -118,7 +119,7 @@ NO* busca(NO *no, int chave, int T, int *posicao){
     if(no->folha){
         return NULL;
     }else{
-        return busca(lerNo(no->filhos[i], T), chave, T, posicao);
+        return busca(lerNo(no->filhos[i], T), chave, T, posicao, nomeBuscado, no->filhos[i]);
     }
 }
 

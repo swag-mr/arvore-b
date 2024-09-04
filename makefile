@@ -5,7 +5,7 @@ CC = gcc
 CFLAGS = -Wall -g
 
 # Nome do executável
-TARGET = programa
+TARGET = arvore_b
 
 # Arquivos de origem
 SRCS = main.c b_tree.c
