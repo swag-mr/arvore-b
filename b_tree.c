@@ -105,19 +105,25 @@ void gravarNo(const char *nome_arquivo, NO *no, int T){
 }
 
 NO* buscaInsercao(NO *no, int chave, int T){ 
-    int i = 0;
-    while(i < no->n && chave > no->chaves[i]){
-        i++;
-    }
+    int inicio = 0;
+    int fim = no->n - 1;
 
-    if(i < no->n && chave == no->chaves[i]){
-        return no;
+    while(inicio <= fim){
+        int meio = (inicio + fim) / 2;
+
+        if(chave == no->chaves[meio]){
+            return no;
+        }else if(chave > no->chaves[meio]){
+            inicio = meio + 1;
+        }else{
+            fim = meio - 1;
+        }
     }
 
     if(no->folha){
         return NULL;
     }else{
-        return buscaInsercao(lerNo(no->filhos[i], T), chave, T);
+        return buscaInsercao(lerNo(no->filhos[inicio], T), chave, T);
     }
 }
 
