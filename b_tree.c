@@ -248,19 +248,20 @@ void inserir(NO **raiz, int chave, int T, char **nomeArquivoRaizAtual){
 void imprimirArvoreB(NO* no, int nivel, int T) {
     if (no != NULL) {
         int i;
-        for (i = 0; i < no->n; i++) {
-            if (!no->folha) {
-                NO *filho = lerNo(no->filhos[i], T);
-                imprimirArvoreB(filho, nivel + 1, T);
-            }
+        if (!no->folha) {
+            NO *filho = lerNo(no->filhos[no->n], T);
+            imprimirArvoreB(filho, nivel + 1, T);
+        }
+        for (i = no->n - 1; i >= 0; i--) {
             for (int j = 0; j < nivel; j++) {
                 printf("    ");  // Indentação para mostrar a profundidade
             }
             printf("%d\n", no->chaves[i]);
-        }
-        if (!no->folha) {
-            NO *filho = lerNo(no->filhos[i], T);
-            imprimirArvoreB(filho, nivel + 1, T);
+
+            if (!no->folha) {
+                NO *filho = lerNo(no->filhos[i], T);
+                imprimirArvoreB(filho, nivel + 1, T);
+            }
         }
     }
 }
