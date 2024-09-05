@@ -11,12 +11,22 @@ int main(){
     NO *raiz = NULL;
     char *nomeArquivoRaiz = (char*) malloc(21 * sizeof(char));
 
-    int opcao, chave, T, pos, inseriu;
+    int opcao, chave, pos, inseriu;
+    int T = 0;
     NO *buscado;
     char *nomeBuscado = (char*) malloc(30 * sizeof(char));
 
-    printf("Digite o T da arvore: ");
-    scanf("%d", &T);
+    while(T < 2){
+        printf("Digite o T da arvore: ");
+        scanf("%d", &T);
+        if(T < 2){
+            printf("\nT inválido!\n");
+            printf("\nPressione Enter para continuar...");
+            getchar();
+            getchar();
+            system("clear");
+        }
+    }
 
     while(1) {
         exibirMenu();
