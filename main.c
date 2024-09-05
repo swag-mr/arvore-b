@@ -9,7 +9,7 @@ int main(){
     setlocale(LC_ALL, "pt_BR.UTF-8");
 
     NO *raiz = NULL;
-    char *nomeArquivoRaiz = (char*) malloc(21 * sizeof(char));
+    char *nomeArquivoRaiz = (char*) malloc(30 * sizeof(char));
 
     int opcao, chave, pos, inseriu;
     int T = 0;
