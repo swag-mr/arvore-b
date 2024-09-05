@@ -250,11 +250,10 @@ int inserir(NO **raiz, int chave, int T, char **nomeArquivoRaizAtual){
             // Não inseriu
             return 0;
         }
+        
+        inserirNaoCheio(*raiz, chave, T, *nomeArquivoRaizAtual);
 
-        if(no->n == 2 * T - 2){
-            // Tive que colocar 2 * T - 2, pois antes ele enchia o array, e não splitava
-            inserirNaoCheio(*raiz, chave, T, *nomeArquivoRaizAtual);
-
+        if(no->n == 2 * T - 1){
             // Split se a raiz estiver cheia
             NO *novaRaiz = criarNo(T, 0);
 
@@ -269,9 +268,6 @@ int inserir(NO **raiz, int chave, int T, char **nomeArquivoRaizAtual){
             splitChild(novaRaiz, 0, T, nomeArquivoNovaRaiz);
 
             *nomeArquivoRaizAtual = nomeArquivoNovaRaiz;
-        }else{
-            inserirNaoCheio(*raiz, chave, T, *nomeArquivoRaizAtual);
-            // Nao precisa retornar o nome do arquivo atual da raiz, pois nao alterou ele
         }
     }
     return 1;
