@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <dirent.h>
 #include "b_tree.h"
 
 char* gerarNomeArquivo(){
@@ -12,6 +13,17 @@ char* gerarNomeArquivo(){
         nome[i] = caracteres[rand() % 62]; // Pois sao 61 caracteres
     }
     nome[29] = '\0'; // Adiciona o \0 (fim da string)
+    return nome;
+}
+
+char* gerarNomeArquivoArvore(){
+    char *nome = (char*) malloc(30 * sizeof(char));
+    const char *caracteres = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    strcpy(nome, "trees/");
+    for(int i = 6; i < 26; i++){
+        nome[i] = caracteres[rand() % 62]; // Pois sao 61 caracteres
+    }
+    nome[26] = '\0'; // Adiciona o \0 (fim da string)
     return nome;
 }
 
@@ -77,6 +89,36 @@ NO* lerNo(const char *nome_arquivo, int T){
     return no;
 }
 
+void lerArvore(const char *nome_arquivo, char **nome_raiz, int *T){
+    FILE *arquivo = fopen(nome_arquivo, "rb");
+
+    if(arquivo == NULL){
+        perror("Erro ao abrir o arquivo");
+        return;
+    }
+
+    fread(T, sizeof(int), 1, arquivo);
+
+    fread(*nome_raiz, sizeof(char), 30, arquivo);
+
+    fclose(arquivo);
+}
+
+void gravarArvore(const char *nome_arquivo, char *nome_raiz, int T){
+    FILE *arquivo = fopen(nome_arquivo, "wb");
+
+    if(arquivo == NULL){
+        perror("Erro ao abrir o arquivo");
+        return;
+    }
+
+    fwrite(&T, sizeof(int), 1, arquivo);
+
+    fwrite(nome_raiz, sizeof(char), 30, arquivo);
+
+    fclose(arquivo);
+}
+
 void gravarNo(const char *nome_arquivo, NO *no, int T){
     FILE *arquivo = fopen(nome_arquivo, "wb");
 
@@ -102,6 +144,37 @@ void gravarNo(const char *nome_arquivo, NO *no, int T){
     }
 
     fclose(arquivo);
+}
+
+void listarArquivosArvore(){
+    DIR *d;
+
+    struct dirent *dir;
+    d = opendir("./trees/");
+    if(d){
+        while((dir = readdir(d)) != NULL){
+            printf("%s\n", dir->d_name);
+        }
+        closedir(d);
+    }
+}
+
+int verificarNomeArquivo(char *nome){
+	DIR *d;
+	struct dirent *dir;
+	d = opendir("./trees/");
+	int cont = 0;
+	if(d){
+		while((dir = readdir(d)) != NULL){
+			if(strcasecmp(dir->d_name, nome) == 0){
+				cont++;
+				break;
+			}
+		}
+		closedir(d);
+	}
+
+	return cont;
 }
 
 NO* buscaInsercao(NO *no, int chave, int T){ 
@@ -291,6 +364,31 @@ void imprimirArvoreB(NO* no, int nivel, int T) {
                 NO *filho = lerNo(no->filhos[i], T);
                 imprimirArvoreB(filho, nivel + 1, T);
             }
+        }
+    }
+}
+
+int primeiroMenu(){
+    int opt;
+    while(1){
+        printf("\n=====================================\n");
+        printf("|        MENU - ÁRVORE B            |\n");
+        printf("=====================================\n");
+        printf("| 1. Criar árvore                   |\n");
+        printf("| 2. Ler árvore                     |\n");
+        printf("| 3. Sair                           |\n");
+        printf("=====================================\n");
+        printf("Digite sua escolha: ");
+        scanf("%d", &opt);
+        
+        if(3 >= opt && opt >= 1){
+            return opt;
+        }else{
+            printf("\nDigite uma opção válida\n");
+            printf("\nPressione Enter para continuar...");
+            getchar(); // Para capturar o Enter após escolher a opção
+            getchar(); // Para aguardar o usuário pressionar Enter
+            system("clear");
         }
     }
 }
