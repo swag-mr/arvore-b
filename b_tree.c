@@ -166,7 +166,7 @@ int verificarNomeArquivo(char *nome){
 	int cont = 0;
 	if(d){
 		while((dir = readdir(d)) != NULL){
-			if(strcasecmp(dir->d_name, nome) == 0){
+			if(strcmp(dir->d_name, nome) == 0){
 				cont++;
 				break;
 			}

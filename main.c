@@ -69,6 +69,8 @@ int main(){
                     break;
                 }else{
                     printf("Digite um arquivo valido!\n");
+                    strcpy(nomeArquivoArvore, "trees/");
+                    fflush(stdin);
                 }
             }
             break;
