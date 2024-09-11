@@ -68,7 +68,8 @@ int main(){
                     raiz = lerNo(nomeArquivoRaiz, T);
                     break;
                 }else{
-                    printf("Digite um arquivo valido!\n");
+                    printf("Digite um arquivo valido!");
+                    // Volto o valor do nomeArquivoArvore e limpo o buffer
                     strcpy(nomeArquivoArvore, "trees/");
                     fflush(stdin);
                 }
