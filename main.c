@@ -112,9 +112,7 @@ int main(){
 
             case 4:
                 printf("\nSaindo...\n");
-                if(opt == 1){
-                    gravarArvore(nomeArquivoArvore, nomeArquivoRaiz, T); 
-                }
+                gravarArvore(nomeArquivoArvore, nomeArquivoRaiz, T); 
                 return 0;
 
             default:
