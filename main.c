@@ -99,7 +99,7 @@ int main(){
             case 2:
                 printf("Digite a chave a ser buscada: ");
                 scanf("%d", &chave);
-                buscado = busca(raiz, chave, T, &pos, &nomeBuscado, nomeArquivoRaiz);
+                buscado = busca(raiz, chave, T, &pos, &nomeBuscado);
                 if(buscado != NULL) {
                     printf("\nChave %d encontrada na posição %d do nó %s.\n", buscado->chaves[pos], pos+1, nomeBuscado);
                 } else {

@@ -27,12 +27,14 @@ char* gerarNomeArquivoArvore(){
     return nome;
 }
 
-NO* criarNo(int T, int folha){
+NO* criarNo(int T, int folha, char *nomeArquivo){
     NO *no = (NO*) malloc(sizeof(NO));
 
     no->n = 0;
     no->chaves = (int*) malloc((2 * T - 1) * sizeof(int));
     no->filhos = (char**) malloc((2 * T) * sizeof(char*));
+    no->filename = (char*) malloc(30 * sizeof(char));
+    strcpy(no->filename, nomeArquivo);
     no->folha = folha;
 
     return no;
@@ -49,13 +51,16 @@ void liberarNo(NO *no){
         }
     }
 
+    // Libera o espaço alocado para o filename
+    free(no->filename);
+
     // Libera o espaço alocado para o array de filhos
     free(no->filhos);
     // Libera o no
     free(no);
 }
 
-NO* lerNo(const char *nome_arquivo, int T){
+NO* lerNo(char *nome_arquivo, int T){
     FILE *arquivo = fopen(nome_arquivo, "rb");
     
     if(arquivo == NULL){
@@ -68,13 +73,16 @@ NO* lerNo(const char *nome_arquivo, int T){
     fread(&folha, sizeof(int), 1, arquivo);
 
     // Inicializa o nó com a informação da folha obtida
-    NO *no = criarNo(T, folha);
+    NO *no = criarNo(T, folha, nome_arquivo);
 
     // Le a quantidade de chaves no nó
     fread(&no->n, sizeof(int), 1, arquivo);
 
     // Le o array de chaves no arquivo
     fread(no->chaves, sizeof(int), no->n, arquivo);
+    
+    // Le o filename
+    fread(no->filename, sizeof(char), 30, arquivo);
 
     if(!no->folha){
         for(int i=0; i <= no->n; i++){
@@ -87,6 +95,36 @@ NO* lerNo(const char *nome_arquivo, int T){
 
     fclose(arquivo);
     return no;
+}
+
+void gravarNo(NO *no, int T){
+    FILE *arquivo = fopen(no->filename, "wb");
+
+    if(arquivo == NULL){
+        perror("Erro ao abrir o arquivo para gravação");
+        return;
+    }
+
+    // Grava se é folha ou não
+    fwrite(&no->folha, sizeof(int), 1, arquivo);
+
+    // Grava o número de chaves do nó
+    fwrite(&no->n, sizeof(int), 1, arquivo);
+
+    // Grava as chaves
+    fwrite(no->chaves, sizeof(int), no->n, arquivo);
+
+    // Grava o filename
+    fwrite(no->filename, sizeof(char), 30, arquivo);
+
+    // Se não for uma folha, grava os nomes dos arquivos dos filhos
+    if(!no->folha){
+        for (int i = 0; i <= no->n; i++) {
+            fwrite(no->filhos[i], sizeof(char), 30, arquivo); // Assume que o tamanho máximo do nome do arquivo é 30
+        }
+    }
+
+    fclose(arquivo);
 }
 
 void lerArvore(const char *nome_arquivo, char **nome_raiz, int *T){
@@ -115,33 +153,6 @@ void gravarArvore(const char *nome_arquivo, char *nome_raiz, int T){
     fwrite(&T, sizeof(int), 1, arquivo);
 
     fwrite(nome_raiz, sizeof(char), 30, arquivo);
-
-    fclose(arquivo);
-}
-
-void gravarNo(const char *nome_arquivo, NO *no, int T){
-    FILE *arquivo = fopen(nome_arquivo, "wb");
-
-    if(arquivo == NULL){
-        perror("Erro ao abrir o arquivo para gravação");
-        return;
-    }
-
-    // Grava se é folha ou não
-    fwrite(&no->folha, sizeof(int), 1, arquivo);
-
-    // Grava o número de chaves do nó
-    fwrite(&no->n, sizeof(int), 1, arquivo);
-
-    // Grava as chaves
-    fwrite(no->chaves, sizeof(int), no->n, arquivo);
-
-    // Se não for uma folha, grava os nomes dos arquivos dos filhos
-    if(!no->folha){
-        for (int i = 0; i <= no->n; i++) {
-            fwrite(no->filhos[i], sizeof(char), 30, arquivo); // Assume que o tamanho máximo do nome do arquivo é 30
-        }
-    }
 
     fclose(arquivo);
 }
@@ -200,7 +211,7 @@ NO* buscaInsercao(NO *no, int chave, int T){
     }
 }
 
-NO* busca(NO *no, int chave, int T, int *posicao, char **nomeBuscado, char *nomeNoAtual){ 
+NO* busca(NO *no, int chave, int T, int *posicao, char **nomeBuscado){ 
     int inicio = 0;
     int fim = no->n - 1;
 
@@ -208,7 +219,7 @@ NO* busca(NO *no, int chave, int T, int *posicao, char **nomeBuscado, char *nome
         int meio = (inicio + fim) / 2;
 
         if(chave == no->chaves[meio]){
-            strcpy(*nomeBuscado, nomeNoAtual);
+            strcpy(*nomeBuscado, no->filename);
             *posicao = meio;
             return no;
         }else if(chave > no->chaves[meio]){
@@ -221,13 +232,15 @@ NO* busca(NO *no, int chave, int T, int *posicao, char **nomeBuscado, char *nome
     if(no->folha){
         return NULL;
     }else{
-        return busca(lerNo(no->filhos[inicio], T), chave, T, posicao, nomeBuscado, no->filhos[inicio]);
+        return busca(lerNo(no->filhos[inicio], T), chave, T, posicao, nomeBuscado);
     }
 }
 
-void splitChild(NO *pai, int indice, int T, char *nomeArquivoPai){
+void splitChild(NO *pai, int indice, int T){
+    char *nomeArquivoNovoNo = gerarNomeArquivo();
+
     NO *filho = lerNo(pai->filhos[indice], T);
-    NO *novoNo = criarNo(T, filho->folha);
+    NO *novoNo = criarNo(T, filho->folha, nomeArquivoNovoNo);
 
     novoNo->n = T - 1;
 
@@ -249,7 +262,6 @@ void splitChild(NO *pai, int indice, int T, char *nomeArquivoPai){
         pai->filhos[i+1] = pai->filhos[i];
     }
     
-    char *nomeArquivoNovoNo = gerarNomeArquivo();
 
     pai->filhos[indice+1] = nomeArquivoNovoNo;
 
@@ -261,14 +273,14 @@ void splitChild(NO *pai, int indice, int T, char *nomeArquivoPai){
     pai->chaves[indice] = filho->chaves[T-1];
     pai->n++;
 
-    gravarNo(nomeArquivoPai, pai, T);
-    gravarNo(nomeArquivoNovoNo, novoNo, T);
-    gravarNo(pai->filhos[indice], filho, T);
+    gravarNo(pai, T);
+    gravarNo(novoNo, T);
+    gravarNo(filho, T);
 
     // Verificar se liberar o nome
 }
 
-void inserirNaoCheio(NO *no, int chave, int T, char *nomeArquivoNo){
+void inserirNaoCheio(NO *no, int chave, int T){
     int i = no->n - 1;
 
     if(no->folha){
@@ -281,7 +293,7 @@ void inserirNaoCheio(NO *no, int chave, int T, char *nomeArquivoNo){
         no->n++;
 
         // Grava o nó alterado de volta no arquivo
-        gravarNo(nomeArquivoNo, no, T);
+        gravarNo(no, T);
     }else{
         // Acha o filho para inserir a chave
         while(i >= 0 && chave < no->chaves[i]){
@@ -292,10 +304,10 @@ void inserirNaoCheio(NO *no, int chave, int T, char *nomeArquivoNo){
         // Carrega o filho do arquivo
         NO *filho = lerNo(no->filhos[i], T);
 
-        inserirNaoCheio(filho, chave, T, no->filhos[i]);
+        inserirNaoCheio(filho, chave, T);
 
         if(filho->n == 2 * T - 1){
-            splitChild(no, i, T, nomeArquivoNo);
+            splitChild(no, i, T);
         }
 
         // Libera a memória do filho
@@ -308,13 +320,14 @@ int inserir(NO **raiz, int chave, int T, char **nomeArquivoRaizAtual){
 
     if(no == NULL){
         // Cria uma raiz
-        *raiz = criarNo(T, 1);
+        char *nomeArquivoRaiz = gerarNomeArquivo();
+
+        *raiz = criarNo(T, 1, nomeArquivoRaiz);
         (*raiz)->chaves[0] = chave;
         (*raiz)->n = 1;
 
         // Grava a nova raiz em um arquivo
-        char *nomeArquivoRaiz = gerarNomeArquivo();
-        gravarNo(nomeArquivoRaiz, *raiz, T);
+        gravarNo(*raiz, T);
 
         *nomeArquivoRaizAtual = nomeArquivoRaiz;
     }else{
@@ -324,11 +337,13 @@ int inserir(NO **raiz, int chave, int T, char **nomeArquivoRaizAtual){
             return 0;
         }
         
-        inserirNaoCheio(*raiz, chave, T, *nomeArquivoRaizAtual);
+        inserirNaoCheio(*raiz, chave, T);
 
         if(no->n == 2 * T - 1){
             // Split se a raiz estiver cheia
-            NO *novaRaiz = criarNo(T, 0);
+            char *nomeArquivoNovaRaiz = gerarNomeArquivo();
+
+            NO *novaRaiz = criarNo(T, 0, nomeArquivoNovaRaiz);
 
             novaRaiz->filhos[0] = *nomeArquivoRaizAtual;
 
@@ -336,9 +351,8 @@ int inserir(NO **raiz, int chave, int T, char **nomeArquivoRaizAtual){
             *raiz = novaRaiz;
 
             // Grava a nova raiz em um arquivo
-            char *nomeArquivoNovaRaiz = gerarNomeArquivo();
 
-            splitChild(novaRaiz, 0, T, nomeArquivoNovaRaiz);
+            splitChild(novaRaiz, 0, T);
 
             *nomeArquivoRaizAtual = nomeArquivoNovaRaiz;
         }
