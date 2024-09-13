@@ -19,7 +19,6 @@ int main(){
     int opcao, chave, pos, inseriu, opt;
     int T = 0;
     NO *buscado;
-    char *nomeBuscado = (char*) malloc(30 * sizeof(char));
 
     opt = primeiroMenu();
 
@@ -99,9 +98,9 @@ int main(){
             case 2:
                 printf("Digite a chave a ser buscada: ");
                 scanf("%d", &chave);
-                buscado = busca(raiz, chave, T, &pos, &nomeBuscado);
+                buscado = busca(raiz, chave, T, &pos);
                 if(buscado != NULL) {
-                    printf("\nChave %d encontrada na posição %d do nó %s.\n", buscado->chaves[pos], pos+1, nomeBuscado);
+                    printf("\nChave %d encontrada na posição %d do nó %s.\n", buscado->chaves[pos], pos+1, buscado->filename);
                 } else {
                     printf("\nChave %d não encontrada.\n", chave);
                 }

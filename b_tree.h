@@ -20,7 +20,7 @@ void gravarNo(NO *no, int T);
 void listarArquivosArvore();
 int verificarNomeArquivo(char *nome);
 NO* buscaInsercao(NO *no, int chave, int T);
-NO* busca(NO *no, int chave, int T, int *posicao, char **nomeBuscado);
+NO* busca(NO *no, int chave, int T, int *posicao);
 void splitChild(NO *pai, int indice, int T);
 void inserirNaoCheio(NO *no, int chave, int T);
 int inserir(NO **raiz, int chave, int T, char **nomeArquivoRaizAtual);

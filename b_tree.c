@@ -211,7 +211,7 @@ NO* buscaInsercao(NO *no, int chave, int T){
     }
 }
 
-NO* busca(NO *no, int chave, int T, int *posicao, char **nomeBuscado){ 
+NO* busca(NO *no, int chave, int T, int *posicao){ 
     int inicio = 0;
     int fim = no->n - 1;
 
@@ -219,7 +219,6 @@ NO* busca(NO *no, int chave, int T, int *posicao, char **nomeBuscado){
         int meio = (inicio + fim) / 2;
 
         if(chave == no->chaves[meio]){
-            strcpy(*nomeBuscado, no->filename);
             *posicao = meio;
             return no;
         }else if(chave > no->chaves[meio]){
@@ -232,7 +231,7 @@ NO* busca(NO *no, int chave, int T, int *posicao, char **nomeBuscado){
     if(no->folha){
         return NULL;
     }else{
-        return busca(lerNo(no->filhos[inicio], T), chave, T, posicao, nomeBuscado);
+        return busca(lerNo(no->filhos[inicio], T), chave, T, posicao);
     }
 }
 
