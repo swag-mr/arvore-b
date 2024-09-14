@@ -314,7 +314,7 @@ void inserirNaoCheio(NO *no, int chave, int T){
     }
 }
 
-int inserir(NO **raiz, int chave, int T, char **nomeArquivoRaizAtual){
+int inserir(NO **raiz, int chave, int T){
     NO *no = *raiz;
 
     if(no == NULL){
@@ -327,8 +327,6 @@ int inserir(NO **raiz, int chave, int T, char **nomeArquivoRaizAtual){
 
         // Grava a nova raiz em um arquivo
         gravarNo(*raiz, T);
-
-        *nomeArquivoRaizAtual = nomeArquivoRaiz;
     }else{
         NO *buscado = buscaInsercao(no, chave, T);
         if(buscado != NULL){
@@ -344,19 +342,167 @@ int inserir(NO **raiz, int chave, int T, char **nomeArquivoRaizAtual){
 
             NO *novaRaiz = criarNo(T, 0, nomeArquivoNovaRaiz);
 
-            novaRaiz->filhos[0] = *nomeArquivoRaizAtual;
+            novaRaiz->filhos[0] = (*raiz)->filename;
 
             // Atualiza a raiz
             *raiz = novaRaiz;
 
             // Grava a nova raiz em um arquivo
-
             splitChild(novaRaiz, 0, T);
-
-            *nomeArquivoRaizAtual = nomeArquivoNovaRaiz;
         }
     }
     return 1;
+}
+
+void apagarArquivo(char *filename){
+    printf("apagou %s", filename);
+    remove(filename);
+}
+
+void removerChaveNaoFolha(NO *no, int indice, int T){
+    int k = no->chaves[indice];
+
+    // Caso a: o filho predecessor tem T chaves
+    NO *predecessor = lerNo(no->filhos[indice], T);
+    if(predecessor->n >= T){
+        // Acha o maior elemento da subarvore da esquerda para trocar pela chave
+        NO *atual = lerNo(no->filhos[indice], T);
+        while(!atual->folha){
+            atual = lerNo(atual->filhos[atual->n], T);
+        }
+        
+        int pred = atual->chaves[atual->n-1];
+        // Copia o valor do maior da subarvore da esquerda no nó atual
+        no->chaves[indice] = pred;
+
+        // Grava o no
+        gravarNo(no, T);
+
+        // Remove o valor copiado recursivamente
+        remover(predecessor, pred, T);
+        /* liberarNo(atual); */
+    }
+
+    // Caso b: o filho sucessor tem T chaves
+    NO *sucessor = lerNo(no->filhos[indice+1], T);
+    if(sucessor->n >= T){
+        // Acha o menor elemento da subarvore da direita para trocar pela chave
+        NO *atual = lerNo(no->filhos[indice+1], T);
+        while(!atual->folha){
+            atual = lerNo(atual->filhos[0], T);
+        }
+
+        int suc = atual->chaves[0];
+        // Copia o valor de menor da subarvore da direita no nó atual
+        no->chaves[indice] = suc;
+        
+        // Grava o no
+        gravarNo(no, T);
+
+        // Remove o valor copiado recursivamente
+        remover(sucessor, suc, T);
+        /* liberarNo(atual); */
+    }
+
+    // Caso c: sucessor e predecessor com T - 1 chaves
+    if((sucessor->n == T - 1) && (predecessor->n == T - 1)){
+        // Adiciona a chave k a ser removida no predecessor para no final remove-la recursivamente
+        predecessor->chaves[T - 1] = k;
+
+        // Copia as chaves do sucessor no predecessor
+        for(int i=0; i < sucessor->n; ++i){
+            predecessor->chaves[i + T] = sucessor->chaves[i];
+        }
+
+        // Se o predecessor nao for folha, copia os filhos do sucessor nele
+        if(!predecessor->folha){
+            for(int i=0; i < sucessor->n; ++i){
+                strcpy(predecessor->filhos[i + T], sucessor->filhos[i]); 
+            }
+        }
+
+        // Reorganiza as chaves no nó
+        for(int i=indice+1; i < no->n; ++i){
+            no->chaves[i - 1] = no->chaves[i];
+        }
+
+        // Reorganiza os filhos no nó
+        for(int i=indice+2; i <= no->n; ++i){
+            strcpy(no->filhos[i-1], no->filhos[i]);
+        }
+
+        // A quantidade de filhos agora é 2T - 1 (T - 1 + T - 1 + 1)
+        predecessor->n += sucessor->n + 1;
+        no->n--;
+
+        // Grava o nó
+        gravarNo(no, T);
+
+        // Remove recursivamente a chave k do predecessor
+        remover(predecessor, k, T);
+
+        // Apaga o arquivo do sucessor
+        apagarArquivo(sucessor->filename);
+    } 
+
+    /* liberarNo(predecessor); */
+    /* liberarNo(sucessor); */
+}
+
+void removerChaveFolha(NO *no, int indice, int T){
+    // Move as chaves
+    for(int i=indice+1; i < no->n; i++){
+        no->chaves[i-1] = no->chaves[i];
+    }
+
+    no->n--;
+
+    gravarNo(no, T);
+}
+
+int remover(NO *no, int chave, int T){
+    // Busca a chave no nó atual
+    int indice = 0;
+
+    while(indice < no->n && chave != no->chaves[indice]){
+        indice++;
+    }
+
+    if(indice < no->n && chave == no->chaves[indice]){
+        // Achou a chave no nó atual
+        if(no->folha){
+            // Caso 1 : remover do nó folha
+            removerChaveFolha(no, indice, T);
+        }else{
+            // Remover do nó interno
+            removerChaveNaoFolha(no, indice, T);
+        }
+        // Removeu
+        return 1;
+    }else{
+        if(no->folha){
+            // Não achou a chave na árvore
+            return 0;
+        }
+
+        
+    }
+    return 1;
+}
+
+int removerCLRS(NO **raiz, int chave, int T){
+    int removeu = remover(*raiz, chave, T);
+
+    if((*raiz)->n == 0){
+        NO *temp = *raiz;
+        *raiz = lerNo((*raiz)->filhos[0], T);
+        gravarNo(*raiz, T);
+
+        apagarArquivo(temp->filename);
+        liberarNo(temp);
+    }
+
+    return removeu;
 }
 
 // Função de impressão da Árvore B
@@ -411,9 +557,10 @@ void exibirMenu(){
     printf("|        MENU - ÁRVORE B            |\n");
     printf("=====================================\n");
     printf("| 1. Inserir na árvore              |\n");
-    printf("| 2. Buscar na árvore               |\n");
-    printf("| 3. Imprimir a árvore              |\n");
-    printf("| 4. Sair                           |\n");
+    printf("| 2. Remover na árvore              |\n");
+    printf("| 3. Buscar na árvore               |\n");
+    printf("| 4. Imprimir a árvore              |\n");
+    printf("| 5. Sair                           |\n");
     printf("=====================================\n");
     printf("Digite sua escolha: ");
 }

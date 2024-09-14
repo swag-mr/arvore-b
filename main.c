@@ -16,7 +16,7 @@ int main(){
 
     strcpy(nomeArquivoArvore, "trees/");
 
-    int opcao, chave, pos, inseriu, opt;
+    int opcao, chave, pos, inseriu, removeu, opt;
     int T = 0;
     NO *buscado;
 
@@ -87,7 +87,7 @@ int main(){
             case 1:
                 printf("Digite a chave a ser inserida: ");
                 scanf("%d", &chave);
-                inseriu = inserir(&raiz, chave, T, &nomeArquivoRaiz);
+                inseriu = inserir(&raiz, chave, T);
                 if(inseriu){
                     printf("\nChave %d inserida com sucesso.\n", chave);
                 }else{
@@ -96,6 +96,17 @@ int main(){
                 break;
 
             case 2:
+                printf("Digite a chave a ser removida: ");
+                scanf("%d", &chave);
+                removeu = removerCLRS(&raiz, chave, T);
+                if(removeu){
+                    printf("\nChave %d removida com sucesso.\n", chave);
+                }else{
+                    printf("\nChave %d não existe na árvore\n", chave);
+                }
+                break;
+
+            case 3:
                 printf("Digite a chave a ser buscada: ");
                 scanf("%d", &chave);
                 buscado = busca(raiz, chave, T, &pos);
@@ -106,15 +117,15 @@ int main(){
                 }
                 break;
 
-            case 3:
+            case 4:
                 printf("\nEstrutura da Árvore B:\n");
                 imprimirArvoreB(raiz, 0, T);
                 printf("\n");
                 break;
 
-            case 4:
+            case 5:
                 printf("\nSaindo...\n");
-                gravarArvore(nomeArquivoArvore, nomeArquivoRaiz, T); 
+                gravarArvore(nomeArquivoArvore, raiz->filename, T); 
                 return 0;
 
             default:

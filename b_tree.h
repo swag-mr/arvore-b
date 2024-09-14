@@ -23,9 +23,15 @@ NO* buscaInsercao(NO *no, int chave, int T);
 NO* busca(NO *no, int chave, int T, int *posicao);
 void splitChild(NO *pai, int indice, int T);
 void inserirNaoCheio(NO *no, int chave, int T);
-int inserir(NO **raiz, int chave, int T, char **nomeArquivoRaizAtual);
+int inserir(NO **raiz, int chave, int T);
 void imprimirArvoreB(NO* no, int nivel, int T);
 int primeiroMenu();
 void exibirMenu();
+
+void apagarArquivo(char *filename);
+void removerChaveNaoFolha(NO *no, int indice, int T);
+void removerChaveFolha(NO *no, int indice, int T);
+int remover(NO *no, int chave, int T);
+int removerCLRS(NO **raiz, int chave, int T);
 
 #endif
