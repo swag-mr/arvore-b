@@ -260,7 +260,6 @@ void splitChild(NO *pai, int indice, int T){
     for(int i=pai->n; i > indice; i--){
         pai->filhos[i+1] = pai->filhos[i];
     }
-    
 
     pai->filhos[indice+1] = nomeArquivoNovoNo;
 
@@ -359,11 +358,13 @@ void apagarArquivo(char *filename){
     remove(filename);
 }
 
+// Caso 2 da remoção
 void removerChaveNaoFolha(NO *no, int indice, int T){
     int k = no->chaves[indice];
+    NO *sucessor = lerNo(no->filhos[indice+1], T);
+    NO *predecessor = lerNo(no->filhos[indice], T);
 
     // Caso a: o filho predecessor tem T chaves
-    NO *predecessor = lerNo(no->filhos[indice], T);
     if(predecessor->n >= T){
         // Acha o maior elemento da subarvore da esquerda para trocar pela chave
         NO *atual = lerNo(no->filhos[indice], T);
@@ -380,75 +381,74 @@ void removerChaveNaoFolha(NO *no, int indice, int T){
 
         // Remove o valor copiado recursivamente
         remover(predecessor, pred, T);
-        /* liberarNo(atual); */
-    }
+        liberarNo(atual);
+    }else{
 
-    // Caso b: o filho sucessor tem T chaves
-    NO *sucessor = lerNo(no->filhos[indice+1], T);
-    if(sucessor->n >= T){
-        // Acha o menor elemento da subarvore da direita para trocar pela chave
-        NO *atual = lerNo(no->filhos[indice+1], T);
-        while(!atual->folha){
-            atual = lerNo(atual->filhos[0], T);
-        }
-
-        int suc = atual->chaves[0];
-        // Copia o valor de menor da subarvore da direita no nó atual
-        no->chaves[indice] = suc;
-        
-        // Grava o no
-        gravarNo(no, T);
-
-        // Remove o valor copiado recursivamente
-        remover(sucessor, suc, T);
-        /* liberarNo(atual); */
-    }
-
-    // Caso c: sucessor e predecessor com T - 1 chaves
-    if((sucessor->n == T - 1) && (predecessor->n == T - 1)){
-        // Adiciona a chave k a ser removida no predecessor para no final remove-la recursivamente
-        predecessor->chaves[T - 1] = k;
-
-        // Copia as chaves do sucessor no predecessor
-        for(int i=0; i < sucessor->n; ++i){
-            predecessor->chaves[i + T] = sucessor->chaves[i];
-        }
-
-        // Se o predecessor nao for folha, copia os filhos do sucessor nele
-        if(!predecessor->folha){
-            for(int i=0; i < sucessor->n; ++i){
-                strcpy(predecessor->filhos[i + T], sucessor->filhos[i]); 
+        // Caso b: o filho sucessor tem T chaves
+        if(sucessor->n >= T){
+            // Acha o menor elemento da subarvore da direita para trocar pela chave
+            NO *atual = lerNo(no->filhos[indice+1], T);
+            while(!atual->folha){
+                atual = lerNo(atual->filhos[0], T);
             }
-        }
 
-        // Reorganiza as chaves no nó
-        for(int i=indice+1; i < no->n; ++i){
-            no->chaves[i - 1] = no->chaves[i];
-        }
+            int suc = atual->chaves[0];
+            // Copia o valor de menor da subarvore da direita no nó atual
+            no->chaves[indice] = suc;
 
-        // Reorganiza os filhos no nó
-        for(int i=indice+2; i <= no->n; ++i){
-            strcpy(no->filhos[i-1], no->filhos[i]);
-        }
+            // Grava o no
+            gravarNo(no, T);
 
-        // A quantidade de filhos agora é 2T - 1 (T - 1 + T - 1 + 1)
-        predecessor->n += sucessor->n + 1;
-        no->n--;
+            // Remove o valor copiado recursivamente
+            remover(sucessor, suc, T);
+            liberarNo(atual);
+        }else{
+            // Caso c: sucessor e predecessor com T - 1 chaves
+            // Adiciona a chave k a ser removida no predecessor para no final remove-la recursivamente
+            predecessor->chaves[T - 1] = k;
 
-        // Grava o nó
-        gravarNo(no, T);
+            // Copia as chaves do sucessor no predecessor
+            for(int i=0; i < sucessor->n; ++i){
+                predecessor->chaves[i + T] = sucessor->chaves[i];
+            }
 
-        // Remove recursivamente a chave k do predecessor
-        remover(predecessor, k, T);
+            // Se o predecessor nao for folha, copia os filhos do sucessor nele
+            if(!predecessor->folha){
+                for(int i=0; i < sucessor->n; ++i){
+                    strcpy(predecessor->filhos[i + T], sucessor->filhos[i]); 
+                }
+            }
 
-        // Apaga o arquivo do sucessor
-        apagarArquivo(sucessor->filename);
-    } 
+            // Reorganiza as chaves no nó
+            for(int i=indice+1; i < no->n; ++i){
+                no->chaves[i - 1] = no->chaves[i];
+            }
 
-    /* liberarNo(predecessor); */
-    /* liberarNo(sucessor); */
+            // Reorganiza os filhos no nó
+            for(int i=indice+2; i <= no->n; ++i){
+                strcpy(no->filhos[i-1], no->filhos[i]);
+            }
+
+            // A quantidade de filhos agora é 2T - 1 (T - 1 + T - 1 + 1)
+            predecessor->n += sucessor->n + 1;
+            no->n--;
+
+            // Grava o nó
+            gravarNo(no, T);
+
+            // Remove recursivamente a chave k do predecessor
+            remover(predecessor, k, T);
+
+            // Apaga o arquivo do sucessor
+            apagarArquivo(sucessor->filename);
+        } 
+    }
+
+    liberarNo(predecessor);
+    liberarNo(sucessor);
 }
 
+// Caso 1 da remoção
 void removerChaveFolha(NO *no, int indice, int T){
     // Move as chaves
     for(int i=indice+1; i < no->n; i++){
@@ -485,7 +485,7 @@ int remover(NO *no, int chave, int T){
             return 0;
         }
 
-        
+ 
     }
     return 1;
 }
@@ -515,7 +515,7 @@ void imprimirArvoreB(NO* no, int nivel, int T) {
         }
         for (i = no->n - 1; i >= 0; i--) {
             for (int j = 0; j < nivel; j++) {
-                printf("    ");  // Indentação para mostrar a profundidade
+                printf("    ");
             }
             printf("%d\n", no->chaves[i]);
 
