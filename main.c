@@ -21,7 +21,7 @@ int main(){
     NO *buscado;
 
     opt = primeiroMenu();
-
+    
     switch(opt){
         case 1:
             // Criar arvore
@@ -41,27 +41,32 @@ int main(){
                 }
             }
             nomeArquivoArvore = gerarNomeArquivoArvore();
+            // --------------------------
+            /* for(int i=1; i <= 18; i++){ */
+            /*     inserir(&raiz, i, T); */
+            /* } */
+            // --------------------------
             break;
         case 2:
             // Ler arvore
             while(1){
                 getchar();
                 system("clear");
-
+    
                 printf("Arquivos Disponíveis:\n\n");
                 listarArquivosArvore();
                 printf("\nDigite o nome do arquivo para a árvore: ");
                 fgets(auxiliarArvore, 27, stdin);
-
+    
                 int i=0;
                 while(auxiliarArvore[i] != '\n'){
                     i++;
                 }
                 auxiliarArvore[i] = '\0';
-
+    
                 int nomeExistente = verificarNomeArquivo(auxiliarArvore);
                 strcat(nomeArquivoArvore, auxiliarArvore);
-
+    
                 if(nomeExistente){
                     lerArvore(nomeArquivoArvore, &nomeArquivoRaiz, &T);
                     raiz = lerNo(nomeArquivoRaiz, T);
@@ -125,7 +130,9 @@ int main(){
 
             case 5:
                 printf("\nSaindo...\n");
-                gravarArvore(nomeArquivoArvore, raiz->filename, T); 
+                if(raiz != NULL){
+                    gravarArvore(nomeArquivoArvore, raiz->filename, T); 
+                }
                 return 0;
 
             default:

@@ -29,9 +29,15 @@ int primeiroMenu();
 void exibirMenu();
 
 void apagarArquivo(char *filename);
+void funde(NO *no, int indice, int T);
+void emprestaAnterior(NO *no, int indice, int T);
+void emprestaSeguinte(NO *no, int indice, int T);
+void preenche(NO *no, int indice, int T);
 void removerChaveNaoFolha(NO *no, int indice, int T);
 void removerChaveFolha(NO *no, int indice, int T);
 int remover(NO *no, int chave, int T);
 int removerCLRS(NO **raiz, int chave, int T);
+
+void testeScript(NO *no, int T);
 
 #endif

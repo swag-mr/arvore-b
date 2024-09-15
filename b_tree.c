@@ -276,8 +276,6 @@ void splitChild(NO *pai, int indice, int T){
     gravarNo(pai, T);
     gravarNo(novoNo, T);
     gravarNo(filho, T);
-
-    // Verificar se liberar o nome
 }
 
 void inserirNaoCheio(NO *no, int chave, int T){
@@ -356,8 +354,152 @@ int inserir(NO **raiz, int chave, int T){
 }
 
 void apagarArquivo(char *filename){
-    printf("apagou %s", filename);
     remove(filename);
+}
+
+void funde(NO *no, int indice, int T){
+    NO *filho = lerNo(no->filhos[indice], T);
+    NO *irmao = lerNo(no->filhos[indice + 1], T);
+
+    // Pega a chave do no pai e coloca no filho
+    filho->chaves[T - 1] = no->chaves[indice];
+
+    // Copia as chaves do irmao para o filho
+    for(int i=0; i < irmao->n; i++){
+        filho->chaves[i+T] = irmao->chaves[i];
+    }
+
+    // Se nao for folha, copia os filhos
+    if(!filho->folha){
+        for(int i=0; i <= irmao->n; i++){
+            filho->filhos[i + T] = (char*) malloc(30 * sizeof(char));
+            strcpy(filho->filhos[i + T], irmao->filhos[i]);
+        }
+    }
+
+    // Move as chaves no nó pai para preencher o espaço deixado pela fusão
+    for(int i=indice+1; i < no->n; i++){
+        no->chaves[i-1] = no->chaves[i];
+    }
+
+    // Move os ponteiros de filhos do pai
+    for(int i=indice+2; i <= no->n; i++){
+        strcpy(no->filhos[i-1], no->filhos[i]);
+    }
+
+    // Atualiza o número de chaves no filho e no pai
+    filho->n += irmao->n + 1;
+    no->n--;
+
+    // Apaga o irmao que foi fundido
+    apagarArquivo(irmao->filename);
+
+    // Grava os nós
+    gravarNo(no, T);
+    gravarNo(filho, T);
+
+    // Libera irmao e filho da memoria
+    liberarNo(irmao);
+    liberarNo(filho);
+}
+
+void emprestaAnterior(NO *no, int indice, int T){
+    NO *filho = lerNo(no->filhos[indice], T);
+    NO *irmao = lerNo(no->filhos[indice-1], T);
+
+    // Abro espaço no inicio para emprestar do filho da esquerda
+    for(int i=filho->n-1; i >= 0; i--){
+        filho->chaves[i+1] = filho->chaves[i];
+    }
+
+    // Se nao for folha, move os filhos
+    if(!filho->folha){
+        for(int i=filho->n; i >= 0; i--){
+            strcpy(filho->filhos[i+1], filho->filhos[i]);
+        }
+    }
+
+    // Passo do pai para o filho
+    filho->chaves[0] = no->chaves[indice-1];
+
+    // Copio a chave do pai no filho
+    if(!filho->folha){
+        strcpy(filho->filhos[0], irmao->filhos[irmao->n]);
+    }
+
+    no->chaves[indice-1] = irmao->chaves[irmao->n-1];
+    filho->n++;
+    irmao->n--;
+
+    gravarNo(irmao, T);
+    gravarNo(filho, T);
+    gravarNo(no, T);
+
+    liberarNo(filho);
+    liberarNo(irmao);
+}
+
+void emprestaSeguinte(NO *no, int indice, int T){
+    NO *filho = lerNo(no->filhos[indice], T);
+    NO *irmao = lerNo(no->filhos[indice+1], T);
+
+    // Desço a chave do pai (no) para o filho
+    filho->chaves[filho->n] = no->chaves[indice];
+
+    // Copia o nome do filho da nova chave no filho
+    if(!filho->folha){
+        strcpy(filho->filhos[filho->n+1], irmao->filhos[0]);
+    }
+
+    no->chaves[indice] = irmao->chaves[0];
+
+    for(int i=1; i < irmao->n; i++){
+        irmao->chaves[i-1] = irmao->chaves[i];
+    }
+
+    if(!irmao->folha){
+        for(int i=1; i <= irmao->n; i++){
+            strcpy(irmao->filhos[i-1], irmao->filhos[i]);
+        }
+    }
+
+    filho->n++;
+    irmao->n--;
+
+    gravarNo(irmao, T);
+    gravarNo(filho, T);
+    gravarNo(no, T);
+
+    liberarNo(filho);
+    liberarNo(irmao);
+}
+
+// Caso 3 
+void preenche(NO *no, int indice, int T){
+    NO *filhoEsq = lerNo(no->filhos[indice-1], T);
+    NO *filhoDir = lerNo(no->filhos[indice], T);
+
+    // Caso 3a
+    if(indice != 0 && filhoEsq->n >= T){
+        printf("3a\n");
+    // Se o filho da esquerda tem T chaves, empresta dele
+        emprestaAnterior(no, indice, T);
+    }else if(indice != no->n && filhoDir->n >= T){
+        printf("3a\n");
+    // Se o da direita tem T chaves, empresta dele
+        emprestaSeguinte(no, indice, T);
+    }else{
+        // Caso 3b
+        if(indice != no->n){
+            printf("3b\n");
+            // Funde o filho com o irmao seguinte
+            funde(no, indice, T);
+        }else{
+            printf("3b\n");
+            // Funde o filho com o irmao anterior
+            funde(no, indice-1, T);
+        }
+    }
 }
 
 // Caso 2 da remoção
@@ -368,6 +510,7 @@ void removerChaveNaoFolha(NO *no, int indice, int T){
 
     // Caso a: o filho predecessor tem T ou mais chaves
     if(predecessor->n >= T){
+        printf("2a\n");
         // Acha o maior elemento da subarvore da esquerda para trocar pela chave
         NO *atual = lerNo(no->filhos[indice], T);
         while(!atual->folha){
@@ -387,6 +530,7 @@ void removerChaveNaoFolha(NO *no, int indice, int T){
     }else{
         // Caso b: o filho sucessor tem T ou mais chaves
         if(sucessor->n >= T){
+            printf("2b\n");
             // Acha o menor elemento da subarvore da direita para trocar pela chave
             NO *atual = lerNo(no->filhos[indice+1], T);
             while(!atual->folha){
@@ -405,40 +549,47 @@ void removerChaveNaoFolha(NO *no, int indice, int T){
             liberarNo(atual);
         }else{
             // Caso c: sucessor e predecessor com T - 1 chaves
-            // Adiciona a chave k a ser removida no predecessor para no final remove-la recursivamente
-            predecessor->chaves[T - 1] = k;
+            printf("2c\n");
+            /* // Adiciona a chave k a ser removida no predecessor para no final remove-la recursivamente */
+            /* predecessor->chaves[T - 1] = k; */
+            /*  */
+            /* // Copia as chaves do sucessor no predecessor */
+            /* for(int i=0; i < sucessor->n; i++){ */
+            /*     predecessor->chaves[i + T] = sucessor->chaves[i]; */
+            /* } */
+            /* predecessor->n = 2 * T - 1; */
+            /*  */
+            /* // Se o predecessor nao for folha, copia os filhos do sucessor nele */
+            /* if(!predecessor->folha){ */
+            /*     for(int i=0; i < sucessor->n; i++){ */
+            /*         predecessor->filhos[i+T] = (char*) malloc(30 * sizeof(char)); */
+            /*         strcpy(predecessor->filhos[i + T], sucessor->filhos[i]);  */
+            /*     } */
+            /* } */
+            /*  */
+            /* // Reorganiza as chaves no nó */
+            /* for(int i=indice+1; i < no->n; i++){ */
+            /*     no->chaves[i] = no->chaves[i + 1]; */
+            /* } */
+            /*  */
+            /* // Reorganiza os filhos no nó */
+            /* for(int i=indice+1; i < no->n; i++){ */
+            /*     no->filhos[i] = (char*) malloc(30 * sizeof(char)); */
+            /*     no->filhos[i+1] = (char*) malloc(30 * sizeof(char)); */
+            /*     strcpy(no->filhos[i], no->filhos[i+1]); */
+            /* } */
+            /*  */
+            /* // A quantidade de filhos agora é 2T - 1 (T - 1 + T - 1 + 1) */
+            /* no->n--; */
+            /*  */
+            /* // Apaga o arquivo do sucessor */
+            /* apagarArquivo(sucessor->filename); */
+            /*  */
+            /* // Grava o nó */
+            /* gravarNo(no, T); */
 
-            // Copia as chaves do sucessor no predecessor
-            for(int i=0; i < sucessor->n; i++){
-                predecessor->chaves[i + T] = sucessor->chaves[i];
-            }
-            predecessor->n += sucessor->n + 1;
-
-            // Se o predecessor nao for folha, copia os filhos do sucessor nele
-            if(!predecessor->folha){
-                for(int i=0; i < sucessor->n; i++){
-                    strcpy(predecessor->filhos[i + T], sucessor->filhos[i]); 
-                }
-            }
-
-            // Reorganiza as chaves no nó
-            for(int i=indice+1; i < no->n; i++){
-                no->chaves[i] = no->chaves[i + 1];
-            }
-
-            // Reorganiza os filhos no nó
-            for(int i=indice+1; i < no->n; i++){
-                strcpy(no->filhos[i], no->filhos[i+1]);
-            }
-
-            // A quantidade de filhos agora é 2T - 1 (T - 1 + T - 1 + 1)
-            no->n--;
-
-            // Apaga o arquivo do sucessor
-            apagarArquivo(sucessor->filename);
-
-            // Grava o nó
-            gravarNo(no, T);
+            funde(no, indice, T);
+            NO *predecessor = lerNo(no->filhos[indice], T);
 
             // Remove recursivamente a chave k do predecessor
             remover(predecessor, k, T);
@@ -451,6 +602,7 @@ void removerChaveNaoFolha(NO *no, int indice, int T){
 
 // Caso 1 da remoção
 void removerChaveFolha(NO *no, int indice, int T){
+    printf("1\n");
     // Move as chaves
     for(int i=indice+1; i < no->n; i++){
         no->chaves[i-1] = no->chaves[i];
@@ -462,15 +614,13 @@ void removerChaveFolha(NO *no, int indice, int T){
 }
 
 int remover(NO *no, int chave, int T){
+    for(int i=0; i < no->n; i++){
+        printf("%d ", no->chaves[i]);
+    }
+    printf("\n");
     // Busca a chave no nó atual
     int indice = 0;
-    int flag = 0;
-    int num = 0;
-    NO *filhoEsq = NULL;
-    NO *filhoDir = NULL;
-    NO *irmaoDir = NULL;
-    NO *irmaoEsq = NULL;
-
+    
     while(indice < no->n && chave != no->chaves[indice]){
         indice++;
     }
@@ -487,150 +637,28 @@ int remover(NO *no, int chave, int T){
         // Removeu
         return 1;
     }else{
+        getchar();
         if(no->folha){
             // Não achou a chave na árvore
             return 0;
         }
+
+        int flag = (chave > no->chaves[indice]);
+
+        NO *filhoDir = lerNo(no->filhos[indice], T);
         
-        // Caso 3 : a chave não está no nó atual
-        filhoEsq = lerNo(no->filhos[indice], T);
-        if(filhoEsq->n == T - 1){
-            if(indice > 0){
-                irmaoEsq = lerNo(no->filhos[indice-1], T);
-                if(irmaoEsq->n >= T){
-                    // Caso 3a
-                    flag = 1;
-                    
-                    // Remove o elemento mais a direita do vetor de chaves do irmão da esquerda do nó que contém a chave
-                    num = irmaoEsq->chaves[irmaoEsq->n-1];
-
-                    // Reorganiza filhos do nó
-                    for(int i=filhoEsq->n; i >= 0; i++){
-                        strcpy(filhoEsq->filhos[i+1], filhoEsq->filhos[i]);
-                    }
-
-                    // Transfere o filho do nó removido para a subávore que contém a chave
-                    strcpy(filhoEsq->filhos[0], irmaoEsq->filhos[irmaoEsq->n]);
-                    irmaoEsq->n--;
-
-                    // Adiciona nova chave ao filho que contém a chave
-                    for(int i=filhoEsq->n-1; i >= 0; i--){
-                        filhoEsq->chaves[i+1] = filhoEsq->chaves[i];
-                    }
-                    filhoEsq->chaves[0] = no->chaves[indice-1];
-                    filhoEsq->n++;
-
-                    no->chaves[indice-1] = num;
-                }
-            }
-
-            if(indice+1 <= no->n && flag == 0){
-                irmaoDir = lerNo(no->filhos[indice+1], T);
-                if(irmaoDir->n >= T){
-                    // Caso 3a também
-                    flag = 1;
-
-                    // Remove o elemento mais a esquerda do vetor de chaves do irmão da direita do nó que contém a chave
-                    num = irmaoDir->chaves[0];
-
-                    // Transfere o filho do nó removido para a subárvore que contém a chave
-                    strcpy(filhoEsq->filhos[filhoEsq->n+1], irmaoDir->filhos[0]);
-                    irmaoDir->n--;
-
-                    // Reorganiza o vetor de chaves do irmão da direita
-                    for(int i=0; i < irmaoDir->n; i++){
-                        irmaoDir->chaves[i] = irmaoDir->chaves[i+1];
-                    }
-
-                    // Reorganiza os filhos do irmao da direita
-                    for(int i=0; i < irmaoDir->n+1; i++){
-                        strcpy(irmaoDir->filhos[i], irmaoDir->filhos[i+1]);
-                    }
-
-                    // Adiciona uma nova chave ao filho que contém a chave
-                    filhoEsq->chaves[filhoEsq->n] = no->chaves[indice];
-                    filhoEsq->n++;
-
-                    // Sobe o número coletado do irmão da direita para o pai
-                    no->chaves[indice] = num;
-                }
-            }
-
-            if(flag == 0){
-                if(indice+1 <= no->n){
-                    // Caso 3b
-                    // Usa a chave na posição indice do no como mediana do filho da esquerda
-                    filhoEsq->chaves[T-1] = no->chaves[indice];
-
-                    // Reorganiza o vetor de chaves do nó
-                    for(int i=indice; i < no->n-1; i++){
-                        no->chaves[i] = no->chaves[i+1];
-                    }
-
-                    // Reorganiza o vetor de filhos do nó
-                    for(int i=indice+1; i < no->n; i++){
-                        strcpy(no->filhos[i], no->filhos[i+1]);
-                    }
-                    no->n--;
-
-                    // Concatena o vetor de chaves do filho da esquerda com seu irmão da direita
-                    for(int i=0; i < T-1; i++){
-                        filhoEsq->chaves[i+T] = irmaoDir->chaves[i];
-                    }
-                    filhoEsq->n = 2 * T - 1;
-
-                    // Concatena o vetor de filhos do filho da esquerda com seu irmão da direita
-                    for(int i=0; i < T; i++){
-                        strcpy(filhoEsq->filhos[i+T], irmaoDir->filhos[i]);
-                    }
-                }else{
-                    // Caso 3b também
-                    // Utiliza a chave na posição indice do no como mediana do filho da esquerda
-                    filhoEsq->chaves[T-1] = no->chaves[indice-1];
-
-                    // Reorganiza o vetor de chaves do nó
-                    for(int i=indice; i < no->n-1; i++){
-                        no->chaves[i] = no->chaves[i+1];
-                    }
-
-                    // Reorganiza o vetor de filhos do nó
-                    for(int i=indice; i < no->n; i++){
-                        strcpy(no->filhos[i], no->filhos[i+1]);
-                    }
-                    no->n--;
-                    
-                    // Reorganiza os elementos existentes do vetor para depois da mediana
-                    for(int i=0; i < T - 1; i++){
-                        filhoEsq->chaves[i+T] = filhoEsq->chaves[i];
-                    }
-
-                    // Insere elementos do irmão da esquerda no vetor de chaves do filho da esquerda
-                    for(int i=0; i < T - 1; i++){
-                        filhoEsq->chaves[i] = irmaoEsq->chaves[i];
-                    }
-                    filhoEsq->n = 2 * T - 1;
-
-                    // Reorganiza o vetor de filhos do nó
-                    for(int i=0; i < T; i++){
-                        strcpy(filhoEsq->filhos[i+T], filhoEsq->filhos[i]);
-                    }
-
-                    // Insere os filhos do irmão da esquerda
-                    for(int i=0; i < T; i++){
-                        strcpy(filhoEsq->filhos[i], irmaoEsq->filhos[i]);
-                    }
-                }
-            }
-            gravarNo(no, T);
-            gravarNo(filhoEsq, T);
-            gravarNo(irmaoEsq, T);
-            gravarNo(irmaoDir, T);
-
-            liberarNo(filhoEsq);
-            liberarNo(filhoDir);
+        if(filhoDir->n < T){
+            preenche(no, indice, T);
         }
-        remover(filhoEsq, chave, T);
-        liberarNo(filhoEsq);
+        
+        if(!flag){
+            NO *filhoAnt = lerNo(no->filhos[indice-1], T);
+            remover(filhoAnt, chave, T);
+            return 1;
+        }else{
+            remover(filhoDir, chave, T);
+            return 1;
+        }
     }
 }
 
@@ -647,6 +675,9 @@ int removerCLRS(NO **raiz, int chave, int T){
     }
 
     return removeu;
+}
+
+void testeScript(NO *no, int T){
 }
 
 // Função de impressão da Árvore B
@@ -679,12 +710,13 @@ int primeiroMenu(){
         printf("=====================================\n");
         printf("| 1. Criar árvore                   |\n");
         printf("| 2. Ler árvore                     |\n");
-        printf("| 3. Sair                           |\n");
+        printf("| 3. Script teste                   |\n");
+        printf("| 4. Sair                           |\n");
         printf("=====================================\n");
         printf("Digite sua escolha: ");
         scanf("%d", &opt);
         
-        if(3 >= opt && opt >= 1){
+        if(4 >= opt && opt >= 1){
             return opt;
         }else{
             printf("\nDigite uma opção válida\n");
