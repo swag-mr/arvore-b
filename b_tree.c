@@ -164,7 +164,9 @@ void listarArquivosArvore(){
     d = opendir("./trees/");
     if(d){
         while((dir = readdir(d)) != NULL){
-            printf("%s\n", dir->d_name);
+            if((strcmp(dir->d_name, ".") != 0) && (strcmp(dir->d_name, "..") != 0)){
+                printf("%s\n", dir->d_name);
+            }
         }
         closedir(d);
     }
@@ -364,7 +366,7 @@ void removerChaveNaoFolha(NO *no, int indice, int T){
     NO *sucessor = lerNo(no->filhos[indice+1], T);
     NO *predecessor = lerNo(no->filhos[indice], T);
 
-    // Caso a: o filho predecessor tem T chaves
+    // Caso a: o filho predecessor tem T ou mais chaves
     if(predecessor->n >= T){
         // Acha o maior elemento da subarvore da esquerda para trocar pela chave
         NO *atual = lerNo(no->filhos[indice], T);
@@ -383,8 +385,7 @@ void removerChaveNaoFolha(NO *no, int indice, int T){
         remover(predecessor, pred, T);
         liberarNo(atual);
     }else{
-
-        // Caso b: o filho sucessor tem T chaves
+        // Caso b: o filho sucessor tem T ou mais chaves
         if(sucessor->n >= T){
             // Acha o menor elemento da subarvore da direita para trocar pela chave
             NO *atual = lerNo(no->filhos[indice+1], T);
@@ -408,39 +409,39 @@ void removerChaveNaoFolha(NO *no, int indice, int T){
             predecessor->chaves[T - 1] = k;
 
             // Copia as chaves do sucessor no predecessor
-            for(int i=0; i < sucessor->n; ++i){
+            for(int i=0; i < sucessor->n; i++){
                 predecessor->chaves[i + T] = sucessor->chaves[i];
             }
+            predecessor->n += sucessor->n + 1;
 
             // Se o predecessor nao for folha, copia os filhos do sucessor nele
             if(!predecessor->folha){
-                for(int i=0; i < sucessor->n; ++i){
+                for(int i=0; i < sucessor->n; i++){
                     strcpy(predecessor->filhos[i + T], sucessor->filhos[i]); 
                 }
             }
 
             // Reorganiza as chaves no nó
-            for(int i=indice+1; i < no->n; ++i){
-                no->chaves[i - 1] = no->chaves[i];
+            for(int i=indice+1; i < no->n; i++){
+                no->chaves[i] = no->chaves[i + 1];
             }
 
             // Reorganiza os filhos no nó
-            for(int i=indice+2; i <= no->n; ++i){
-                strcpy(no->filhos[i-1], no->filhos[i]);
+            for(int i=indice+1; i < no->n; i++){
+                strcpy(no->filhos[i], no->filhos[i+1]);
             }
 
             // A quantidade de filhos agora é 2T - 1 (T - 1 + T - 1 + 1)
-            predecessor->n += sucessor->n + 1;
             no->n--;
+
+            // Apaga o arquivo do sucessor
+            apagarArquivo(sucessor->filename);
 
             // Grava o nó
             gravarNo(no, T);
 
             // Remove recursivamente a chave k do predecessor
             remover(predecessor, k, T);
-
-            // Apaga o arquivo do sucessor
-            apagarArquivo(sucessor->filename);
         } 
     }
 
@@ -463,6 +464,12 @@ void removerChaveFolha(NO *no, int indice, int T){
 int remover(NO *no, int chave, int T){
     // Busca a chave no nó atual
     int indice = 0;
+    int flag = 0;
+    int num = 0;
+    NO *filhoEsq = NULL;
+    NO *filhoDir = NULL;
+    NO *irmaoDir = NULL;
+    NO *irmaoEsq = NULL;
 
     while(indice < no->n && chave != no->chaves[indice]){
         indice++;
@@ -474,7 +481,7 @@ int remover(NO *no, int chave, int T){
             // Caso 1 : remover do nó folha
             removerChaveFolha(no, indice, T);
         }else{
-            // Remover do nó interno
+            // Caso 2 : Remover do nó interno
             removerChaveNaoFolha(no, indice, T);
         }
         // Removeu
@@ -484,10 +491,147 @@ int remover(NO *no, int chave, int T){
             // Não achou a chave na árvore
             return 0;
         }
+        
+        // Caso 3 : a chave não está no nó atual
+        filhoEsq = lerNo(no->filhos[indice], T);
+        if(filhoEsq->n == T - 1){
+            if(indice > 0){
+                irmaoEsq = lerNo(no->filhos[indice-1], T);
+                if(irmaoEsq->n >= T){
+                    // Caso 3a
+                    flag = 1;
+                    
+                    // Remove o elemento mais a direita do vetor de chaves do irmão da esquerda do nó que contém a chave
+                    num = irmaoEsq->chaves[irmaoEsq->n-1];
 
- 
+                    // Reorganiza filhos do nó
+                    for(int i=filhoEsq->n; i >= 0; i++){
+                        strcpy(filhoEsq->filhos[i+1], filhoEsq->filhos[i]);
+                    }
+
+                    // Transfere o filho do nó removido para a subávore que contém a chave
+                    strcpy(filhoEsq->filhos[0], irmaoEsq->filhos[irmaoEsq->n]);
+                    irmaoEsq->n--;
+
+                    // Adiciona nova chave ao filho que contém a chave
+                    for(int i=filhoEsq->n-1; i >= 0; i--){
+                        filhoEsq->chaves[i+1] = filhoEsq->chaves[i];
+                    }
+                    filhoEsq->chaves[0] = no->chaves[indice-1];
+                    filhoEsq->n++;
+
+                    no->chaves[indice-1] = num;
+                }
+            }
+
+            if(indice+1 <= no->n && flag == 0){
+                irmaoDir = lerNo(no->filhos[indice+1], T);
+                if(irmaoDir->n >= T){
+                    // Caso 3a também
+                    flag = 1;
+
+                    // Remove o elemento mais a esquerda do vetor de chaves do irmão da direita do nó que contém a chave
+                    num = irmaoDir->chaves[0];
+
+                    // Transfere o filho do nó removido para a subárvore que contém a chave
+                    strcpy(filhoEsq->filhos[filhoEsq->n+1], irmaoDir->filhos[0]);
+                    irmaoDir->n--;
+
+                    // Reorganiza o vetor de chaves do irmão da direita
+                    for(int i=0; i < irmaoDir->n; i++){
+                        irmaoDir->chaves[i] = irmaoDir->chaves[i+1];
+                    }
+
+                    // Reorganiza os filhos do irmao da direita
+                    for(int i=0; i < irmaoDir->n+1; i++){
+                        strcpy(irmaoDir->filhos[i], irmaoDir->filhos[i+1]);
+                    }
+
+                    // Adiciona uma nova chave ao filho que contém a chave
+                    filhoEsq->chaves[filhoEsq->n] = no->chaves[indice];
+                    filhoEsq->n++;
+
+                    // Sobe o número coletado do irmão da direita para o pai
+                    no->chaves[indice] = num;
+                }
+            }
+
+            if(flag == 0){
+                if(indice+1 <= no->n){
+                    // Caso 3b
+                    // Usa a chave na posição indice do no como mediana do filho da esquerda
+                    filhoEsq->chaves[T-1] = no->chaves[indice];
+
+                    // Reorganiza o vetor de chaves do nó
+                    for(int i=indice; i < no->n-1; i++){
+                        no->chaves[i] = no->chaves[i+1];
+                    }
+
+                    // Reorganiza o vetor de filhos do nó
+                    for(int i=indice+1; i < no->n; i++){
+                        strcpy(no->filhos[i], no->filhos[i+1]);
+                    }
+                    no->n--;
+
+                    // Concatena o vetor de chaves do filho da esquerda com seu irmão da direita
+                    for(int i=0; i < T-1; i++){
+                        filhoEsq->chaves[i+T] = irmaoDir->chaves[i];
+                    }
+                    filhoEsq->n = 2 * T - 1;
+
+                    // Concatena o vetor de filhos do filho da esquerda com seu irmão da direita
+                    for(int i=0; i < T; i++){
+                        strcpy(filhoEsq->filhos[i+T], irmaoDir->filhos[i]);
+                    }
+                }else{
+                    // Caso 3b também
+                    // Utiliza a chave na posição indice do no como mediana do filho da esquerda
+                    filhoEsq->chaves[T-1] = no->chaves[indice-1];
+
+                    // Reorganiza o vetor de chaves do nó
+                    for(int i=indice; i < no->n-1; i++){
+                        no->chaves[i] = no->chaves[i+1];
+                    }
+
+                    // Reorganiza o vetor de filhos do nó
+                    for(int i=indice; i < no->n; i++){
+                        strcpy(no->filhos[i], no->filhos[i+1]);
+                    }
+                    no->n--;
+                    
+                    // Reorganiza os elementos existentes do vetor para depois da mediana
+                    for(int i=0; i < T - 1; i++){
+                        filhoEsq->chaves[i+T] = filhoEsq->chaves[i];
+                    }
+
+                    // Insere elementos do irmão da esquerda no vetor de chaves do filho da esquerda
+                    for(int i=0; i < T - 1; i++){
+                        filhoEsq->chaves[i] = irmaoEsq->chaves[i];
+                    }
+                    filhoEsq->n = 2 * T - 1;
+
+                    // Reorganiza o vetor de filhos do nó
+                    for(int i=0; i < T; i++){
+                        strcpy(filhoEsq->filhos[i+T], filhoEsq->filhos[i]);
+                    }
+
+                    // Insere os filhos do irmão da esquerda
+                    for(int i=0; i < T; i++){
+                        strcpy(filhoEsq->filhos[i], irmaoEsq->filhos[i]);
+                    }
+                }
+            }
+            gravarNo(no, T);
+            gravarNo(filhoEsq, T);
+            gravarNo(irmaoEsq, T);
+            gravarNo(irmaoDir, T);
+
+            liberarNo(filhoEsq);
+            liberarNo(filhoDir);
+        }
+        remover(filhoEsq, chave, T);
+        liberarNo(filhoEsq);
     }
-    return 1;
 }
 
 int removerCLRS(NO **raiz, int chave, int T){
