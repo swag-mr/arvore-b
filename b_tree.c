@@ -56,7 +56,7 @@ void liberarNo(NO *no){
 
     // Libera o espaço alocado para o array de filhos
     free(no->filhos);
-    // Libera o no
+    // Libera o ponteiro do no
     free(no);
 }
 
